@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parole partagée — mathématiques en plusieurs langues</title>
+<style>
+  :root{
+    --ink:#0e1920;--panel:#152530;--panel2:#1b2f3c;--line:#26414f;
+    --chalk:#eaf2f5;--muted:#8fa8b6;--amber:#f4b840;--amber-soft:#463617;
+    --ok:#5fc9a0;--warn:#e8735a;--radius:14px;--fs:1rem;
+    --ui:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,"Noto Sans","Noto Sans Arabic","Noto Sans Hebrew","Noto Sans Devanagari","Noto Sans Bengali","Noto Sans Tamil","Noto Sans Georgian","Noto Sans Armenian","Noto Sans Thai","Noto Sans Khmer","Noto Sans Myanmar","Noto Sans Ethiopic",sans-serif;
+  }
+  body.clair{--ink:#f7f5f0;--panel:#fff;--panel2:#efece4;--line:#dcd6c9;--chalk:#16212a;--muted:#5e6f7a;--amber:#9c6608;--amber-soft:#fbeccb}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--chalk);font-family:var(--ui);font-size:var(--fs);line-height:1.45;overflow:hidden}
+  body.dys{--ui:"Trebuchet MS",Verdana,sans-serif;letter-spacing:.025em;word-spacing:.08em}
+  button,input,select{font:inherit;color:inherit}
+  button{background:none;border:0;cursor:pointer}
+  a{color:var(--amber)}
+  :focus-visible{outline:3px solid var(--amber);outline-offset:2px;border-radius:8px}
+  ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  #app{display:flex;height:100%}
+  #rail{width:66px;flex:0 0 66px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;z-index:5;overflow-y:auto}
+  .ricon{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;color:var(--muted);flex:0 0 auto}
+  .ricon:hover{background:var(--panel2);color:var(--chalk)}
+  .ricon[aria-pressed="true"]{background:var(--amber);color:#18140a}
+  .ricon svg{width:23px;height:23px;stroke-width:1.7}
+  .rsep{width:28px;height:1px;background:var(--line);margin:5px 0}
+  .rail-spacer{flex:1;min-height:10px}
+  #mic{width:54px;height:54px;border-radius:50%;background:var(--panel2);border:2px solid var(--line);color:var(--chalk)}
+  #mic svg{width:26px;height:26px}
+  #mic.on{background:var(--warn);border-color:var(--warn);color:#fff}
+  #level{width:34px;height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:6px}
+  #level i{display:block;height:100%;width:0;background:var(--ok);transition:width .08s}
+
+  #main{flex:1;min-width:0;display:flex;flex-direction:column}
+  #topbar{display:flex;align-items:center;gap:9px;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel);min-height:52px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border:1px solid var(--line);border-radius:999px;font-size:.85em;color:var(--muted);white-space:nowrap}
+  .chip b{color:var(--chalk);font-weight:600}
+  .chip.live{border-color:var(--warn);color:var(--warn)}
+  .chip.bad{border-color:var(--warn);color:var(--warn)}
+  .chip.good{border-color:var(--ok);color:var(--ok)}
+  .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:0 0 auto}
+  #srcpick{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+  .grow{flex:1}
+
+  #stream{flex:1;overflow-y:auto;padding:16px 18px 28vh}
+  .tour{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin:0 auto 16px;max-width:1600px;overflow:hidden}
+  .tour.live,.tour.draft{border-color:var(--amber)}
+  .fr{padding:17px 20px;font-size:1.85em;font-weight:600;line-height:1.32;display:flex;gap:12px;align-items:flex-start}
+  .fr .txt{flex:1;min-width:0}
+  .mainline[contenteditable="true"]{background:var(--panel2);border-radius:9px;padding:4px 9px;outline:2px solid var(--amber);font-weight:500}
+  .interim{color:var(--muted);font-weight:400}
+  .src-note{font-size:.48em;color:var(--muted);font-weight:400;display:block;margin-bottom:3px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));border-top:1px solid var(--line)}
+  .cell{padding:13px 18px 15px;border-right:1px solid var(--line);border-top:1px solid var(--line);margin-top:-1px;min-width:0}
+  .cell:last-child{border-right:0}
+  .cell .head{display:flex;align-items:center;gap:8px;margin-bottom:5px;color:var(--muted);font-size:.8em}
+  .cell .head .native{color:var(--chalk);font-weight:600;font-size:1.12em}
+  .cell .body{font-size:1.3em;line-height:1.55;overflow-wrap:anywhere}
+  .cell[dir="rtl"] .body,.cell[dir="rtl"] .head{direction:rtl;text-align:right}
+  .cell[dir="rtl"] .head{flex-direction:row-reverse}
+  .cell.simple{background:var(--panel2)}
+  .wait{display:inline-flex;gap:5px;align-items:center;color:var(--muted)}
+  .wait i{width:7px;height:7px;border-radius:50%;background:currentColor;display:block;animation:bl 1.2s infinite}
+  .wait i:nth-child(2){animation-delay:.2s}.wait i:nth-child(3){animation-delay:.4s}
+  @keyframes bl{0%,100%{opacity:.25}50%{opacity:1}}
+  .fail{color:var(--warn);font-size:.72em;display:inline-flex;gap:6px;align-items:center;cursor:pointer;line-height:1.35}
+  .fail svg{width:15px;height:15px;flex:0 0 auto}
+
+  .g{font-weight:700;border-radius:5px;padding:0 3px;cursor:pointer;box-shadow:inset 0 -3px 0 currentColor;color:var(--gc);unicode-bidi:isolate}
+  .g:hover{background:color-mix(in srgb,currentColor 20%,transparent)}
+
+  .iconbtn{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--muted);flex:0 0 auto}
+  .iconbtn:hover{background:var(--panel2);color:var(--amber)}
+  .iconbtn svg{width:20px;height:20px}
+  .iconbtn.sm{width:29px;height:29px}.iconbtn.sm svg{width:16px;height:16px}
+  .iconbtn.go{background:var(--amber);color:#18140a}
+
+  #inputbar{display:flex;gap:8px;align-items:center;padding:9px 14px;border-top:1px solid var(--line);background:var(--panel)}
+  #typed{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+
+  .sheet{position:fixed;inset:0;background:rgba(4,10,14,.7);display:none;z-index:40}
+  .sheet.open{display:block}
+  .sheet .box{position:absolute;top:0;right:0;bottom:0;width:min(880px,100%);background:var(--ink);border-left:1px solid var(--line);display:flex;flex-direction:column}
+  .sheet .box.wide{width:min(1150px,100%)}
+  .sheet header{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+  .sheet h2{margin:0;font-size:1.15em;font-weight:600}
+  .sheet .content{flex:1;overflow-y:auto;padding:18px 22px 60px}
+  .prose{max-width:66ch}
+  .prose h3{font-size:1.02em;margin:24px 0 6px;color:var(--amber)}
+  .prose p,.prose li{margin:0 0 10px;opacity:.92}
+  .prose ul{padding-left:20px;margin:0 0 12px}
+  .small{color:var(--muted);font-size:.88em}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;padding:0 18px 12px}
+  .tab{padding:7px 13px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-size:.9em}
+  .tab[aria-selected="true"]{background:var(--amber);color:#18140a;border-color:var(--amber);font-weight:600}
+  #gsearch{width:100%;padding:11px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:14px}
+  .chap{margin:26px 0 8px;font-size:1.02em;font-weight:600;color:var(--amber);border-bottom:1px solid var(--line);padding-bottom:6px}
+  .chap:first-child{margin-top:0}
+  .row{display:flex;gap:12px;padding:9px 2px;border-bottom:1px solid var(--line);align-items:flex-start}
+  .row .fr-t{flex:0 0 32%;font-weight:600;display:flex;align-items:center;gap:6px}
+  .row .tr{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:3px 14px;font-size:.95em}
+  .row .tr span{color:var(--muted)}
+  .row .tr b{font-weight:500;color:var(--chalk)}
+  .row .tr .rtl{direction:rtl;unicode-bidi:isolate;display:inline-block}
+
+  .set{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+  .set .lbl{flex:1}
+  .set .lbl small{display:block;color:var(--muted);font-size:.84em;margin-top:2px}
+  .set select,.set input[type=range]{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:7px 10px;max-width:270px}
+  .sw{width:52px;height:29px;border-radius:999px;background:var(--line);position:relative;flex:0 0 auto}
+  .sw::after{content:"";position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;background:var(--chalk);transition:.18s}
+  .sw[aria-pressed="true"]{background:var(--amber)}
+  .sw[aria-pressed="true"]::after{left:26px;background:#18140a}
+
+  .diag{border:1px solid var(--line);border-radius:12px;padding:4px 16px;margin:0 0 20px;background:var(--panel)}
+  .dline{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line);font-size:.92em}
+  .dline:last-child{border-bottom:0}
+  .dline .st{width:20px;flex:0 0 20px;text-align:center;font-weight:700}
+  .dline .st.o{color:var(--ok)}.dline .st.x{color:var(--warn)}.dline .st.w{color:var(--amber)}
+  .dline .tx{flex:1}
+  .dline .tx b{display:block;font-weight:600}
+  .dline .tx span{color:var(--muted);font-size:.92em}
+
+  #start{position:fixed;inset:0;background:var(--ink);z-index:60;overflow-y:auto}
+  .wrap{max-width:1020px;margin:0 auto;padding:36px 22px 40px}
+  .kicker{color:var(--amber);font-size:.92em;margin:0 0 6px}
+  h1{font-size:2.6em;line-height:1.06;margin:0 0 12px;font-weight:600;letter-spacing:-.02em}
+  .lede{color:var(--muted);max-width:60ch;margin:0 0 30px}
+  .block{margin-bottom:30px}
+  .block>h3{font-size:1em;font-weight:600;margin:0 0 4px}
+  .block>p{color:var(--muted);font-size:.9em;margin:0 0 12px;max-width:64ch}
+  .pills{display:flex;flex-wrap:wrap;gap:8px}
+  .pill{padding:9px 15px;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-size:.94em}
+  .pill[aria-pressed="true"]{background:var(--amber);color:#18140a;border-color:var(--amber);font-weight:600}
+  .langgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:8px}
+  .lang{display:flex;flex-direction:column;gap:1px;padding:10px 13px;border:1px solid var(--line);border-radius:11px;background:var(--panel);text-align:left}
+  .lang .n{font-weight:600;unicode-bidi:isolate}
+  .lang .o{color:var(--muted);font-size:.87em}
+  .lang .oral{color:var(--amber);font-size:.78em}
+  .lang[aria-pressed="true"]{border-color:var(--amber);background:var(--amber-soft)}
+  .lang:disabled{opacity:.3;cursor:not-allowed}
+  .group{color:var(--muted);font-size:.85em;margin:22px 0 8px}
+  .go{position:sticky;bottom:0;background:linear-gradient(transparent,var(--ink) 32%);padding:22px 0 10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .btn{padding:14px 28px;border-radius:12px;background:var(--amber);color:#18140a;font-weight:700;font-size:1.05em}
+  .btn:disabled{opacity:.38;cursor:not-allowed}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--chalk);font-weight:500;padding:11px 20px;font-size:.95em}
+  .note{color:var(--muted);font-size:.86em;max-width:46ch}
+  footer.credits{border-top:1px solid var(--line);margin-top:28px;padding:20px 0 0;display:flex;gap:20px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:.88em}
+  footer.credits a,footer.credits button{color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+  footer.credits a:hover,footer.credits button:hover{color:var(--amber)}
+
+  #focus{position:fixed;inset:0;background:var(--ink);z-index:55;display:none;padding:4vh 5vw;overflow-y:auto}
+  #focus.open{display:block}
+  #focus .ftxt{font-size:clamp(2rem,6vw,4.5rem);font-weight:600;line-height:1.25}
+  #focus .fhead{display:flex;align-items:center;gap:14px;margin-bottom:4vh;color:var(--muted)}
+
+  #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);padding:10px 18px;border-radius:999px;z-index:70;display:none;font-size:.92em;max-width:80vw;text-align:center}
+  @media print{
+    #rail,#topbar,#inputbar,.sheet .box header,.tabs,#gsearch,#start,.iconbtn,#toast,#focus{display:none!important}
+    body,.sheet,.sheet .box{position:static!important;background:#fff!important;color:#000!important;overflow:visible!important;height:auto!important;display:block!important}
+    #stream,.sheet .content{overflow:visible;padding:0}
+    .tour,.row{break-inside:avoid;border-color:#bbb}
+    .g{box-shadow:none;text-decoration:underline}
+  }
+  @media (max-width:780px){
+    .fr{font-size:1.35em;padding:13px}.cell{padding:11px 13px}
+    #rail{width:54px;flex-basis:54px}
+    .row{flex-direction:column;gap:4px}.row .fr-t{flex-basis:auto}
+    h1{font-size:1.9em}
+  }
+</style>
+
+<div id="app" hidden>
+  <nav id="rail" aria-label="Commandes">
+    <button class="ricon" id="btnMode" title="Basculer professeur / élève" aria-pressed="false"></button>
+    <button class="ricon" id="btnGloss" title="Glossaire"></button>
+    <button class="ricon" id="btnFiche" title="Fiche de vocabulaire de la séance"></button>
+    <div class="rsep"></div>
+    <button class="ricon" id="btnSet" title="Réglages"></button>
+    <button class="ricon" id="btnAbout" title="À propos et confidentialité"></button>
+    <button class="ricon" id="btnPrint" title="Imprimer la séance"></button>
+    <button class="ricon" id="btnClear" title="Effacer l'écran"></button>
+    <div class="rail-spacer"></div>
+    <button class="ricon" id="mic" title="Parler — barre d'espace"></button>
+    <div id="level"><i></i></div>
+    <div class="rsep"></div>
+    <button class="ricon" id="btnZoomUp" title="Agrandir le texte"></button>
+    <button class="ricon" id="btnZoomDn" title="Réduire le texte"></button>
+  </nav>
+  <div id="main">
+    <div id="topbar">
+      <span class="chip" id="modeChip"><span class="dot"></span><b>Professeur</b></span>
+      <select id="srcpick" aria-label="Langue de l'élève" hidden></select>
+      <span class="chip" id="langChip"></span>
+      <span class="grow"></span>
+      <span class="chip" id="engineChip"></span>
+      <span class="chip" id="status"><span class="dot"></span>Micro éteint</span>
+    </div>
+    <div id="stream" aria-live="polite"></div>
+    <div id="inputbar">
+      <input id="typed" type="text" placeholder="Écrire une phrase, puis Entrée" aria-label="Saisir une phrase" autocomplete="off">
+      <button class="iconbtn go" id="send" title="Traduire"></button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="glossSheet"><div class="box wide">
+  <header><h2>Glossaire</h2><span class="grow"></span>
+    <button class="iconbtn" id="gPreload" title="Traduire tout le glossaire maintenant"></button>
+    <button class="iconbtn" data-close title="Fermer"></button></header>
+  <div class="tabs" id="gTabs" role="tablist"></div>
+  <div class="content"><input id="gsearch" type="search" placeholder="Chercher un mot…" aria-label="Chercher"><div id="gList"></div></div>
+</div></div>
+
+<div class="sheet" id="ficheSheet"><div class="box wide">
+  <header><h2>Fiche de vocabulaire de la séance</h2><span class="grow"></span>
+    <button class="iconbtn" id="fPrint" title="Imprimer"></button>
+    <button class="iconbtn" data-close title="Fermer"></button></header>
+  <div class="content"><div id="ficheBody"></div></div>
+</div></div>
+
+<div class="sheet" id="setSheet"><div class="box">
+  <header><h2>Réglages</h2><span class="grow"></span><button class="iconbtn" data-close title="Fermer"></button></header>
+  <div class="content" id="setBody"></div>
+</div></div>
+
+<div class="sheet" id="infoSheet"><div class="box">
+  <header><h2 id="infoTitle">À propos</h2><span class="grow"></span><button class="iconbtn" data-close title="Fermer"></button></header>
+  <div class="tabs" id="iTabs" role="tablist">
+    <button class="tab" data-itab="about" role="tab" aria-selected="true">À propos</button>
+    <button class="tab" data-itab="privacy" role="tab" aria-selected="false">Confidentialité</button>
+    <button class="tab" data-itab="install" role="tab" aria-selected="false">Installation</button>
+  </div>
+  <div class="content"><div class="prose" id="infoBody"></div></div>
+</div></div>
+
+<div id="focus" role="dialog" aria-label="Affichage plein écran">
+  <div class="fhead"><span id="fLang"></span><span class="grow"></span>
+    <button class="iconbtn" id="fSay" title="Écouter"></button>
+    <button class="iconbtn" id="fClose" title="Fermer"></button></div>
+  <div class="ftxt" id="fTxt"></div>
+</div>
+
+<div id="start"><div class="wrap">
+  <p class="kicker">Classe d'accueil · mathématiques</p>
+  <h1>Parole partagée</h1>
+  <p class="lede">Ce que vous dites s'affiche en français et dans les langues de vos élèves. Les mots de mathématiques portent la même couleur dans toutes les langues.</p>
+
+  <div class="block">
+    <h3>État de l'appareil</h3>
+    <p>Vérification du micro et du moteur de traduction avant de commencer.</p>
+    <div class="diag" id="diag"></div>
+    <button class="btn ghost" id="retest">Relancer le test</button>
+    <button class="btn ghost" id="howto">Comment installer</button>
+  </div>
+
+  <div class="block">
+    <h3>Niveau de la classe</h3>
+    <div class="pills" id="lvlPills"></div>
+  </div>
+
+  <div class="block">
+    <h3>Au programme aujourd'hui</h3>
+    <p>Facultatif mais utile : sans contexte, « base », « hauteur » ou « puissance » se traduisent au hasard.</p>
+    <div class="pills" id="chapPills"></div>
+  </div>
+
+  <div class="block">
+    <h3>Langues affichées <span id="count" style="color:var(--muted);font-weight:400"></span></h3>
+    <p>Quatre au maximum, pour rester lisible au vidéoprojecteur.</p>
+    <div id="langBank"></div>
+  </div>
+
+  <div class="go">
+    <button class="btn" id="goBtn" disabled>Ouvrir la séance</button>
+    <button class="btn ghost" id="demoBtn">Voir un exemple</button>
+    <p class="note">Le glossaire déjà traduit est gardé dans ce navigateur. Aucune séance n'est enregistrée.</p>
+  </div>
+
+  <footer class="credits">
+    <button data-info="about">À propos</button>
+    <button data-info="privacy">Confidentialité</button>
+    <button data-info="install">Installation</button>
+    <a href="https://tom-rougeaud.github.io/casier/" target="_blank" rel="noopener">Voir plus de projets</a>
+    <span class="grow"></span>
+    <span>Conçu par <a href="https://www.linkedin.com/in/tomrougeaud/" target="_blank" rel="noopener">Tom Rougeaud</a></span>
+  </footer>
+</div></div>
+
+<div id="toast" role="status"></div>
+
+<script>
+/* ===== ICÔNES ===== */
+const I={
+ mic:'<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/>',
+ stop:'<rect x="6" y="6" width="12" height="12" rx="2"/>',
+ book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7M8 11h7"/>',
+ list:'<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
+ gear:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v2.6M12 18.9v2.6M21.5 12h-2.6M5.1 12H2.5M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8M18.7 18.7l-1.8-1.8M7.1 7.1 5.3 5.3"/>',
+ info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+ swap:'<path d="M7 4 3 8l4 4"/><path d="M3 8h13a4 4 0 0 1 0 8h-1"/><path d="M17 20l4-4-4-4"/>',
+ print:'<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/>',
+ trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',
+ sound:'<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/>',
+ close:'<path d="M6 6l12 12M18 6 6 18"/>',
+ dl:'<path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/>',
+ copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',
+ pen:'<path d="M4 20h4L20 8a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M14 6l4 4"/>',
+ check:'<path d="M4 12.5 9.5 18 20 6"/>',
+ expand:'<path d="M4 9V4h5M20 15v5h-5M20 9V4h-5M4 15v5h5"/>',
+ arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+ retry:'<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>'
+};
+const svg=k=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+I[k]+'</svg>';
+const setIcon=(id,k)=>{const e=document.getElementById(id);if(e)e.innerHTML=svg(k)};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ===== LANGUES  (g = code du moteur gratuit ; absent = non pris en charge) ===== */
+const LANGS=[
+ {g:'Langues les plus présentes en classe d\'accueil',l:[
+  {c:'ar',n:'العربية',o:'Arabe',rtl:1,sr:'ar-SA',g:'ar'},
+  {c:'uk',n:'Українська',o:'Ukrainien',sr:'uk-UA',g:'uk'},
+  {c:'ru',n:'Русский',o:'Russe',sr:'ru-RU',g:'ru'},
+  {c:'tr',n:'Türkçe',o:'Turc',sr:'tr-TR',g:'tr'},
+  {c:'pt',n:'Português',o:'Portugais (Brésil)',sr:'pt-BR',g:'pt'},
+  {c:'es',n:'Español',o:'Espagnol',sr:'es-ES',g:'es'},
+  {c:'en',n:'English',o:'Anglais',sr:'en-GB',g:'en'},
+  {c:'sq',n:'Shqip',o:'Albanais',sr:'sq-AL',g:'sq'},
+  {c:'ro',n:'Română',o:'Roumain',sr:'ro-RO',g:'ro'},
+  {c:'fa',n:'فارسی',o:'Persan / dari',rtl:1,sr:'fa-IR',g:'fa'},
+  {c:'ps',n:'پښتو',o:'Pachto',rtl:1,sr:'ps-AF',g:'ps'},
+  {c:'bn',n:'বাংলা',o:'Bengali',sr:'bn-BD',g:'bn'},
+  {c:'zh',n:'中文',o:'Chinois mandarin',sr:'zh-CN',g:'zh-CN'},
+  {c:'ka',n:'ქართული',o:'Géorgien',sr:'ka-GE',g:'ka'},
+  {c:'ti',n:'ትግርኛ',o:'Tigrigna',sr:'ti-ER',g:'ti'},
+  {c:'so',n:'Soomaali',o:'Somali',sr:'so-SO',g:'so'}]},
+ {g:'Europe',l:[
+  {c:'it',n:'Italiano',o:'Italien',sr:'it-IT',g:'it'},
+  {c:'de',n:'Deutsch',o:'Allemand',sr:'de-DE',g:'de'},
+  {c:'nl',n:'Nederlands',o:'Néerlandais',sr:'nl-NL',g:'nl'},
+  {c:'pl',n:'Polski',o:'Polonais',sr:'pl-PL',g:'pl'},
+  {c:'bg',n:'Български',o:'Bulgare',sr:'bg-BG',g:'bg'},
+  {c:'sr',n:'Српски',o:'Serbe',sr:'sr-RS',g:'sr'},
+  {c:'hr',n:'Hrvatski',o:'Croate / bosniaque',sr:'hr-HR',g:'hr'},
+  {c:'mk',n:'Македонски',o:'Macédonien',sr:'mk-MK',g:'mk'},
+  {c:'el',n:'Ελληνικά',o:'Grec',sr:'el-GR',g:'el'},
+  {c:'hu',n:'Magyar',o:'Hongrois',sr:'hu-HU',g:'hu'},
+  {c:'cs',n:'Čeština',o:'Tchèque',sr:'cs-CZ',g:'cs'},
+  {c:'hy',n:'Հայերեն',o:'Arménien',sr:'hy-AM',g:'hy'},
+  {c:'ptpt',n:'Português',o:'Portugais (Portugal)',sr:'pt-PT',g:'pt'},
+  {c:'mo',n:'Молдовеняскэ',o:'Moldave',sr:'ro-RO',g:'ro'}]},
+ {g:'Afrique',l:[
+  {c:'ary',n:'الدارجة',o:'Arabe marocain',rtl:1,sr:'ar-MA',g:'ar'},
+  {c:'arq',n:'الجزايرية',o:'Arabe algérien',rtl:1,sr:'ar-DZ',g:'ar'},
+  {c:'sw',n:'Kiswahili',o:'Swahili',sr:'sw-KE',g:'sw'},
+  {c:'am',n:'አማርኛ',o:'Amharique',sr:'am-ET',g:'am'},
+  {c:'bm',n:'Bamanankan',o:'Bambara',oral:1,sr:'fr-FR',g:'bm'},
+  {c:'ln',n:'Lingála',o:'Lingala',oral:1,sr:'fr-FR',g:'ln'},
+  {c:'wo',n:'Wolof',o:'Wolof',oral:1,sr:'fr-FR'},
+  {c:'ff',n:'Pulaar',o:'Peul / pular',oral:1,sr:'fr-FR'},
+  {c:'snk',n:'Sooninkan',o:'Soninké',oral:1,sr:'fr-FR'},
+  {c:'ber',n:'ⵜⴰⵎⴰⵣⵉⵖⵜ',o:'Amazigh / kabyle',oral:1,sr:'ar-MA'},
+  {c:'mg',n:'Malagasy',o:'Malgache',sr:'fr-FR',g:'mg'},
+  {c:'zdj',n:'Shikomori',o:'Comorien',oral:1,sr:'fr-FR'}]},
+ {g:'Asie, Caucase, Amériques',l:[
+  {c:'hi',n:'हिन्दी',o:'Hindi',sr:'hi-IN',g:'hi'},
+  {c:'ur',n:'اردو',o:'Ourdou',rtl:1,sr:'ur-PK',g:'ur'},
+  {c:'pa',n:'ਪੰਜਾਬੀ',o:'Pendjabi',sr:'pa-IN',g:'pa'},
+  {c:'ta',n:'தமிழ்',o:'Tamoul',sr:'ta-IN',g:'ta'},
+  {c:'si',n:'සිංහල',o:'Cinghalais',sr:'si-LK',g:'si'},
+  {c:'ne',n:'नेपाली',o:'Népalais',sr:'ne-NP',g:'ne'},
+  {c:'vi',n:'Tiếng Việt',o:'Vietnamien',sr:'vi-VN',g:'vi'},
+  {c:'km',n:'ខ្មែរ',o:'Khmer',sr:'km-KH',g:'km'},
+  {c:'th',n:'ไทย',o:'Thaï',sr:'th-TH',g:'th'},
+  {c:'my',n:'မြန်မာ',o:'Birman',sr:'my-MM',g:'my'},
+  {c:'id',n:'Indonesia',o:'Indonésien',sr:'id-ID',g:'id'},
+  {c:'tl',n:'Tagalog',o:'Tagalog',sr:'fil-PH',g:'tl'},
+  {c:'mn',n:'Монгол',o:'Mongol',sr:'mn-MN',g:'mn'},
+  {c:'ckb',n:'کوردیی ناوەندی',o:'Kurde sorani',rtl:1,sr:'ar-IQ',g:'ckb'},
+  {c:'ku',n:'Kurmancî',o:'Kurde kurmandji',sr:'tr-TR',g:'ku'},
+  {c:'az',n:'Azərbaycan',o:'Azéri',sr:'az-AZ',g:'az'},
+  {c:'uz',n:"O'zbek",o:'Ouzbek',sr:'uz-UZ',g:'uz'},
+  {c:'he',n:'עברית',o:'Hébreu',rtl:1,sr:'he-IL',g:'iw'},
+  {c:'ce',n:'Нохчийн',o:'Tchétchène',oral:1,sr:'ru-RU'},
+  {c:'ht',n:'Kreyòl ayisyen',o:'Créole haïtien',sr:'fr-FR',g:'ht'}]}
+];
+const LMAP={};LANGS.forEach(g=>g.l.forEach(l=>LMAP[l.c]=l));
+
+/* ===== GLOSSAIRE ===== */
+const CHAPS=[
+ {id:'cons',t:"Consignes et verbes d'action",lvl:'pcl',verbs:1,terms:['calculer','effectuer','résoudre','tracer','construire','mesurer','reporter','comparer','ranger','classer','encadrer','arrondir','simplifier','développer','factoriser','réduire','justifier','démontrer','expliquer','en déduire','vérifier','compléter','entourer','colorier','relier','cocher','souligner','recopier','placer','repérer','nommer','citer','convertir','estimer','rédiger','observer','choisir','barrer','découper','plier']},
+ {id:'classe',t:'La classe et le matériel',lvl:'pcl',terms:['règle','équerre','compas','rapporteur','calculatrice','crayon','gomme','cahier','feuille','ardoise','tableau','exercice','leçon','devoir','évaluation','correction','brouillon','énoncé','question','réponse','consigne','note','erreur','juste','faux','carreau','marge','trousse']},
+ {id:'nb',t:'Nombres et calculs',lvl:'pcl',terms:['nombre','chiffre','nombre entier','nombre décimal','virgule','unité','dizaine','centaine','millier','million','addition','somme','soustraction','différence','multiplication','produit','division','quotient','reste','dividende','diviseur','multiple','facteur','table de multiplication','double','moitié','triple','opération','priorité opératoire','parenthèse','calcul mental','ordre de grandeur','arrondi','égal','supérieur','inférieur','croissant','décroissant','nombre premier','critère de divisibilité']},
+ {id:'frac',t:'Fractions et écritures décimales',lvl:'pcl',terms:['fraction','numérateur','dénominateur','demi','tiers','quart','fraction irréductible','simplifier une fraction','mettre au même dénominateur','PGCD','partie entière','partie décimale','écriture décimale','écriture fractionnaire','inverse','division euclidienne']},
+ {id:'rel',t:'Nombres relatifs et puissances',lvl:'cl',terms:['nombre relatif','positif','négatif','signe','opposé','valeur absolue','droite graduée','puissance','exposant','carré','cube','racine carrée','écriture scientifique']},
+ {id:'prop',t:'Proportionnalité, pourcentages, calculs professionnels',lvl:'pcl',terms:['proportionnalité','tableau de proportionnalité','coefficient de proportionnalité','produit en croix','règle de trois','ratio','échelle','pourcentage','augmentation','remise',"prix d'achat",'prix de vente','bénéfice','taux','TVA','prix hors taxes','prix toutes taxes comprises','vitesse moyenne','débit','masse volumique','taux horaire','salaire brut','salaire net','devis','facture','intérêt','évolution']},
+ {id:'mes',t:'Grandeurs et mesures',lvl:'pcl',terms:['longueur','largeur','hauteur','profondeur','épaisseur','périmètre','aire','surface','volume','contenance','masse','poids','durée','heure','minute','seconde','mètre','centimètre','millimètre','kilomètre','gramme','kilogramme','tonne','litre','millilitre','mètre carré','mètre cube','conversion','tableau de conversion','température','degré','angle','vitesse','unité de mesure']},
+ {id:'geo',t:'Géométrie plane',lvl:'pcl',terms:['point','droite','demi-droite','segment','milieu','parallèle','perpendiculaire','sécante','angle droit','angle aigu','angle obtus','angle plat','bissectrice','médiatrice',"hauteur d'un triangle",'médiane','triangle','triangle isocèle','triangle équilatéral','triangle rectangle','quadrilatère','carré','rectangle','losange','parallélogramme','trapèze','cercle','disque','rayon','diamètre','corde','arc de cercle','centre','sommet','côté','diagonale','figure','polygone','codage']},
+ {id:'transfo',t:'Repérage, symétries et transformations',lvl:'pcl',terms:['symétrie axiale','axe de symétrie','symétrie centrale','centre de symétrie','translation','rotation','agrandissement','réduction','repère','coordonnées','abscisse','ordonnée','origine','quadrillage','déplacement','vue de dessus']},
+ {id:'sol',t:'Solides et volumes',lvl:'pcl',terms:['solide','cube','pavé droit','prisme droit','cylindre','cône','pyramide','sphère','boule','arête','face',"sommet d'un solide",'patron','perspective cavalière','base','section']},
+ {id:'pyth',t:'Pythagore, Thalès, trigonométrie',lvl:'cl',terms:['théorème de Pythagore','hypoténuse','côté adjacent','côté opposé','théorème de Thalès','triangles semblables','cosinus','sinus','tangente','réciproque','contraposée','rapport de longueurs']},
+ {id:'litt',t:'Calcul littéral et équations',lvl:'cl',terms:['expression littérale','inconnue','variable','équation',"solution d'une équation",'membre de gauche','membre de droite','développer une expression','factoriser une expression','identité remarquable','distributivité','réduire une expression','substituer','programme de calcul','inéquation']},
+ {id:'fonc',t:'Fonctions et graphiques',lvl:'cl',terms:['fonction',"image d'un nombre",'antécédent','tableau de valeurs','fonction linéaire','fonction affine','coefficient directeur',"ordonnée à l'origine",'courbe représentative','graphique','axe des abscisses','axe des ordonnées','lire graphiquement','représenter graphiquement','variation']},
+ {id:'stat',t:'Statistiques et probabilités',lvl:'pcl',terms:['donnée','effectif','effectif total','fréquence','moyenne','médiane','étendue','minimum','maximum','série statistique','tableau de données','diagramme en bâtons','diagramme circulaire','histogramme','population','échantillon','probabilité','événement','issue','hasard','certain','impossible','équiprobable','expérience aléatoire']},
+ {id:'algo',t:'Algorithmique, tableur, calculatrice',lvl:'pcl',terms:['algorithme','programme','instruction','boucle','répéter','condition','si… alors','sinon','script','bloc','tableur','cellule','formule','ligne','colonne','feuille de calcul','logiciel de géométrie','touche','écran']},
+ {id:'logi',t:'Mots pour raisonner et rédiger',lvl:'pcl',terms:['donc','car','parce que','or','ainsi',"d'abord",'ensuite','enfin','on sait que','on en déduit que','conclusion','hypothèse','propriété','théorème','définition','exemple','contre-exemple','méthode','démonstration','au moins','au plus','chacun','autant que','de plus que','de moins que','environ','exactement','par personne']}
+];
+const NOAUTO=new Set(['or','car','note','place','juste','chacun','touche','écran','ligne','colonne','marge','carreau','trousse','signe','base','codage','issue','donnée']);
+const MAXHL=8;
+const TERMS={},LEXICON=[];let TID=0;
+const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,"'").replace(/…/g,'').replace(/\s+/g,' ').trim();
+const EXTRA={'résoudre':['résous','résolvez','résolvons','résolu'],'construire':['construis','construisez','construisons','construit','construite'],'en déduire':['en déduis','en déduisez','on en déduit'],'rédiger':['rédige','rédigez','rédigé'],'réduire':['réduis','réduisez','réduit'],'tracer':['trace','tracez','traçons','tracé','tracée'],'placer':['place','placez','plaçons','placé'],'faux':['fausse'],'égal':['égale','égaux','égales']};
+function conj(v){const o=[v];if(/er$/.test(v)){const s=v.slice(0,-2);['e','es','ent','ez','ons','é','ée','és','ées','era','erez','eront','ait','ais'].forEach(t=>o.push(s+t))}return o}
+CHAPS.forEach(ch=>ch.terms.forEach(fr=>{
+  const id='t'+(++TID);TERMS[id]={id,fr,chap:ch.id,auto:!NOAUTO.has(fr)};
+  const f=new Set([fr]);
+  if(ch.verbs)conj(fr).forEach(x=>f.add(x));
+  if(EXTRA[fr])EXTRA[fr].forEach(x=>f.add(x));
+  if(!/s$|x$/.test(fr)){f.add(fr+'s');if(/(au|eu)$/.test(fr))f.add(fr+'x')}
+  f.forEach(x=>{const n=norm(x);LEXICON.push({n,id,w:n.split(' ').length})});
+}));
+const LEXMAP={};LEXICON.forEach(e=>{if(!LEXMAP[e.n])LEXMAP[e.n]=e.id});
+const MAXW=Math.max(...LEXICON.map(e=>e.w));
+const PALETTE=['#ffb454','#6fd3ff','#9be870','#ff8fa3','#c4a6ff','#5fe0c0','#ffd166','#ff9f6e'];
+const colorOf=id=>PALETTE[(parseInt(id.slice(1),10)*3)%PALETTE.length];
+
+function detect(text){
+  const tk=[],re=/[\p{L}\p{N}'’-]+/gu;let m;
+  while((m=re.exec(text)))tk.push({w:m[0],s:m.index,e:m.index+m[0].length});
+  const hits=[];let i=0;
+  while(i<tk.length&&hits.length<MAXHL){
+    let f=null;
+    for(let n=Math.min(MAXW,tk.length-i);n>=1;n--){
+      const sl=tk.slice(i,i+n),id=LEXMAP[norm(sl.map(t=>t.w).join(' '))];
+      if(id&&TERMS[id].auto){f={id,s:sl[0].s,e:sl[n-1].e,n};break}
+    }
+    if(f){hits.push(f);i+=f.n}else i++;
+  }
+  return hits;
+}
+function markFr(t,h){
+  if(!h||!h.length)return esc(t);
+  let o='',p=0;
+  h.forEach(x=>{o+=esc(t.slice(p,x.s));
+    o+=`<span class="g" style="--gc:${colorOf(x.id)}" data-say="${esc(TERMS[x.id].fr)}" role="button" tabindex="0" title="Écouter en français">${esc(t.slice(x.s,x.e))}</span>`;
+    p=x.e});
+  return o+esc(t.slice(p));
+}
+/* surlignage dans la traduction : on cherche l'équivalent connu du glossaire */
+function markTarget(text,lang,ids){
+  let out=esc(text);
+  const cache=GC[lang]||{};
+  const done=new Set();
+  ids.forEach(id=>{
+    const tr=cache[id];if(!tr||done.has(tr))return;
+    const cands=[tr];
+    const longest=tr.split(/\s+/).filter(w=>w.length>=4).sort((a,b)=>b.length-a.length)[0];
+    if(longest&&longest!==tr)cands.push(longest);
+    for(const c of cands){
+      const needle=esc(c);
+      const i=out.toLowerCase().indexOf(needle.toLowerCase());
+      if(i>=0&&!/<[^>]*$/.test(out.slice(0,i))){
+        out=out.slice(0,i)+`<span class="g" style="--gc:${colorOf(id)}" data-say="${esc(TERMS[id].fr)}" role="button" tabindex="0" title="Écouter en français">`+out.substr(i,needle.length)+'</span>'+out.slice(i+needle.length);
+        done.add(tr);break;
+      }
+    }
+  });
+  return out;
+}
+
+/* ===== ÉTAT & STOCKAGE ===== */
+const S={mode:'prof',level:'c',chaps:[],langs:[],simple:false,notation:true,relire:false,
+         voiceFr:'',rate:.92,srcLang:'',started:false,engine:null};
+const USED=new Set();
+const mem={};
+const STORE={
+  async set(k,v){const s=JSON.stringify(v);
+    try{if(window.storage){await window.storage.set(k,s);return}}catch(e){}
+    try{localStorage.setItem('pp:'+k,s);return}catch(e){}
+    mem[k]=v},
+  async get(k){
+    try{if(window.storage){const r=await window.storage.get(k);if(r)return JSON.parse(r.value)}}catch(e){}
+    try{const v=localStorage.getItem('pp:'+k);if(v)return JSON.parse(v)}catch(e){}
+    return mem[k]??null}
+};
+const GC={};
+async function loadCache(l){if(!GC[l])GC[l]=(await STORE.get('glo:'+l))||{};return GC[l]}
+const saveCache=l=>STORE.set('glo:'+l,GC[l]);
+function toast(m,ms=3200){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(toast._t);toast._t=setTimeout(()=>t.style.display='none',ms)}
+
+/* ===== MOTEURS DE TRADUCTION ===== */
+const LVLTXT={p:'école élémentaire, 8 à 11 ans',c:'collège, 11 à 15 ans',l:'lycée professionnel et CAP, 15 à 18 ans'};
+const ctxChaps=()=>S.chaps.length?CHAPS.filter(c=>S.chaps.includes(c.id)).map(c=>c.t).join(' ; '):'non précisé';
+
+/* -- moteur gratuit (Google, point d'accès public sans clé) -- */
+async function gFetch(texts,sl,tl){
+  const q=texts.join('\n');
+  const url='https://translate.googleapis.com/translate_a/single?client=gtx&sl='+sl+'&tl='+tl+'&dt=t&q='+encodeURIComponent(q);
+  const r=await fetch(url);
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const d=await r.json();
+  const joined=d[0].map(s=>s[0]).join('');
+  const parts=joined.split('\n').map(s=>s.trim()).filter((s,i,a)=>true);
+  return parts;
+}
+async function gTranslate(texts,sl,tl){
+  if(texts.length===1)return [(await gFetch(texts,sl,tl)).join(' ').trim()];
+  const out=await gFetch(texts,sl,tl);
+  if(out.length===texts.length)return out;
+  const res=[];for(const t of texts){res.push((await gFetch([t],sl,tl)).join(' ').trim())}
+  return res;
+}
+/* -- moteur de secours MyMemory -- */
+async function mmTranslate(text,sl,tl){
+  const r=await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(text)+'&langpair='+sl+'|'+tl);
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const d=await r.json();
+  const t=d&&d.responseData&&d.responseData.translatedText;
+  if(!t)throw new Error('réponse vide');
+  return String(t);
+}
+/* -- moteur Claude (si disponible) -- */
+async function claudeAsk(system,user,max=1600){
+  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:max,system,messages:[{role:"user",content:user}]})});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const d=await r.json();
+  return d.content.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+}
+function parseJSON(t){
+  let s=String(t).trim().replace(/^```(?:json)?/,'').replace(/```$/,'').trim();
+  const a=s.indexOf('{'),b=s.lastIndexOf('}');if(a>=0&&b>a)s=s.slice(a,b+1);
+  return JSON.parse(s);
+}
+
+const ENGINES={
+  claude:{label:'Claude',note:'tient compte du chapitre et du niveau'},
+  google:{label:'Google Traduction',note:'accès public sans clé'},
+  mymemory:{label:'MyMemory',note:'secours, volume limité'}
+};
+async function testEngine(k){
+  try{
+    if(k==='claude'){await claudeAsk('Réponds par le mot OK.','test',10);return true}
+    if(k==='google'){const o=await gTranslate(['bonjour'],'fr','en');return !!o[0]}
+    if(k==='mymemory'){return !!(await mmTranslate('bonjour','fr','en'))}
+  }catch(e){return false}
+}
+async function pickEngine(){
+  for(const k of ['claude','google','mymemory']){if(await testEngine(k)){S.engine=k;return k}}
+  S.engine=null;return null;
+}
+const gcode=c=>LMAP[c]&&LMAP[c].g;
+
+/* traduction d'une phrase vers toutes les langues */
+async function translateAll(text,srcCode,targets,wantSimple){
+  const res={};
+  if(S.engine==='claude'){
+    const keys=targets.map(c=>`"${c}" : ${LMAP[c].o} (${LMAP[c].n})`);
+    if(srcCode!=='fr')keys.unshift('"fr" : français');
+    if(wantSimple)keys.push('"simple" : français très simple, niveau A1, phrases de moins de dix mots');
+    const imposed=[];
+    for(const c of targets){const ca=await loadCache(c);
+      const k=Object.keys(ca).filter(id=>norm(text).includes(norm(TERMS[id].fr))).slice(0,12).map(id=>`${TERMS[id].fr} → ${ca[id]}`);
+      if(k.length)imposed.push(LMAP[c].o+' : '+k.join(' · '))}
+    const sys=`Tu traduis les paroles d'un cours de mathématiques pour élèves allophones.
+Niveau : ${LVLTXT[S.level]}. Chapitres au programme : ${ctxChaps()}.
+Langue de départ : ${srcCode==='fr'?'français':LMAP[srcCode].o}.
+Traduis fidèlement, phrases courtes, vocabulaire concret. N'ajoute rien, ne réponds pas à la question posée.
+Nombres, unités et expressions restent en chiffres et symboles.
+Le chapitre lève les ambiguïtés : base, hauteur, puissance, racine, face, sommet, rapport, image.
+Vocabulaire imposé : ${imposed.join(' | ')||'aucun'}
+Clés JSON attendues :
+${keys.join('\n')}
+Réponds uniquement par cet objet JSON.`;
+    let obj;
+    try{obj=parseJSON(await claudeAsk(sys,text))}
+    catch(e){obj=parseJSON(await claudeAsk(sys+"\nTa réponse doit être un objet JSON valide et rien d'autre.",text))}
+    return obj;
+  }
+  const sl=srcCode==='fr'?'fr':(gcode(srcCode)||'auto');
+  const jobs=targets.map(async c=>{
+    const tl=gcode(c);
+    if(!tl){res[c]={err:'Langue non prise en charge par le moteur « '+ENGINES[S.engine].label+' ».'};return}
+    try{res[c]=S.engine==='google'?(await gTranslate([text],sl,tl))[0]:await mmTranslate(text,sl,tl)}
+    catch(e){res[c]={err:'Moteur injoignable ('+e.message+')'}}
+  });
+  if(srcCode!=='fr')jobs.push((async()=>{
+    try{res.fr=S.engine==='google'?(await gTranslate([text],sl,'fr'))[0]:await mmTranslate(text,sl,'fr')}
+    catch(e){res.fr={err:'Moteur injoignable ('+e.message+')'}}})());
+  if(wantSimple)res.simple=null;
+  await Promise.all(jobs);
+  return res;
+}
+
+/* traduction du glossaire */
+async function translateTerms(lang,ids,onStep){
+  const cache=await loadCache(lang);
+  const todo=ids.filter(i=>!cache[i]);if(!todo.length||!S.engine)return cache;
+  const L=LMAP[lang];
+  const size=S.engine==='claude'?40:20;
+  for(let i=0;i<todo.length;i+=size){
+    const pack=todo.slice(i,i+size);
+    try{
+      if(S.engine==='claude'){
+        const list=pack.map(id=>`${id}: ${TERMS[id].fr}  [${CHAPS.find(c=>c.id===TERMS[id].chap).t}]`).join('\n');
+        const obj=parseJSON(await claudeAsk(
+`Traduis ce vocabulaire scolaire de mathématiques du français vers ${L.o} (${L.n}), pour des élèves de ${LVLTXT[S.level]}.
+Donne le terme employé en cours de mathématiques, pas une traduction littérale ; le chapitre entre crochets lève les ambiguïtés.
+Écris dans l'alphabet de la langue. Réponds uniquement par un objet JSON {"identifiant":"traduction"}.`,list,2500));
+        Object.keys(obj).forEach(k=>{if(TERMS[k])cache[k]=String(obj[k]).trim()});
+      }else{
+        const tl=gcode(lang);if(!tl)return cache;
+        const src=pack.map(id=>TERMS[id].fr);
+        const out=S.engine==='google'?await gTranslate(src,'fr',tl)
+                 :await Promise.all(src.map(t=>mmTranslate(t,'fr',tl).catch(()=>'')));
+        pack.forEach((id,j)=>{if(out[j])cache[id]=String(out[j]).trim()});
+      }
+      onStep&&onStep();
+    }catch(e){console.warn('glossaire',lang,e)}
+  }
+  await saveCache(lang);return cache;
+}
+
+/* ===== VOIX ===== */
+let VOICES=[];
+function scoreFr(v){
+  const n=(v.name||'').toLowerCase();if(!/^fr/i.test(v.lang))return -999;let s=0;
+  if(n.includes('natural'))s+=120;
+  if(/neural|premium|enhanced/.test(n))s+=90;
+  if(n.includes('google'))s+=85;
+  if(n.includes('siri'))s+=70;
+  if(/(denise|henri|vivienne|remy|rémy|eloise|éloise|jacqueline|yves|brigitte|céleste|coralie|jérôme|joséphine|maurice|nathalie|thierry|alain|charline)/.test(n))s+=45;
+  if(/(thomas|amélie|amelie|aurélie|aurelie|marie|daniel|audrey)/.test(n))s+=35;
+  if(/(compact|espeak|festival|pico|novelty)/.test(n))s-=120;
+  if(v.localService===false)s+=20;
+  if(/fr[-_]fr/i.test(v.lang))s+=25;
+  return s;
+}
+function refreshVoices(){
+  VOICES=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
+  if(!S.voiceFr){const b=VOICES.filter(v=>/^fr/i.test(v.lang)).sort((a,b)=>scoreFr(b)-scoreFr(a))[0];if(b)S.voiceFr=b.name}
+}
+if('speechSynthesis' in window){refreshVoices();speechSynthesis.onvoiceschanged=()=>{refreshVoices();if(document.getElementById('setSheet').classList.contains('open'))renderSettings()}}
+function say(text,code='fr'){
+  if(!('speechSynthesis' in window))return toast("Ce navigateur ne lit pas à voix haute.");
+  if(!text||!text.trim())return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  if(code==='fr'||code==='simple'){u.lang='fr-FR';u.rate=S.rate;
+    const v=VOICES.find(x=>x.name===S.voiceFr);if(v)u.voice=v}
+  else{const L=LMAP[code],base=(L&&L.sr)||'en-GB';u.lang=base;u.rate=.95;
+    const v=VOICES.filter(x=>x.lang.replace('_','-').toLowerCase().startsWith(base.slice(0,2)))
+                  .sort((a,b)=>(b.localService===false)-(a.localService===false))[0];
+    if(v)u.voice=v;else return toast("Aucune voix « "+(L?L.o:code)+" » installée sur cet appareil.")}
+  speechSynthesis.speak(u);
+}
+
+/* ===== ÉCRITURE MATHÉMATIQUE ===== */
+const NOT=[
+ [/\b(?:élevé )?au carré\b/gi,'²'],[/\bau cube\b/gi,'³'],
+ [/\bpuissance (?:deux|2)\b/gi,'²'],[/\bpuissance (?:trois|3)\b/gi,'³'],
+ [/\bracine carrée de\b/gi,'√'],[/\bsupérieur ou égal à\b/gi,'≥'],[/\binférieur ou égal à\b/gi,'≤'],
+ [/\bdifférent de\b/gi,'≠'],[/\bdegrés? celsius\b/gi,'°C'],[/(\d+)\s+degrés\b/gi,'$1°'],
+ [/\bpour ?cent\b/gi,'%'],[/(\d+)\s+virgule\s+(\d+)/gi,'$1,$2'],
+ [/\bun demi\b/gi,'1/2'],[/\bun tiers\b/gi,'1/3'],[/\bun quart\b/gi,'1/4'],
+ [/\btrois quarts\b/gi,'3/4'],[/\bdeux tiers\b/gi,'2/3'],
+ [/\bmètres? carrés?\b/gi,'m²'],[/\bmètres? cubes?\b/gi,'m³'],
+ [/\bcentimètres? carrés?\b/gi,'cm²'],[/\bcentimètres? cubes?\b/gi,'cm³']
+];
+const notation=t=>S.notation?NOT.reduce((s,[r,x])=>s.replace(r,x),t):t;
+
+/* ===== MICRO ===== */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null,listening=false,audioCtx=null,meterStream=null,meterRAF=0;
+const SRERR={
+ 'not-allowed':"Le micro est bloqué. Cliquez sur l'icône de cadenas dans la barre d'adresse et autorisez le microphone.",
+ 'service-not-allowed':"Le service de transcription est refusé par le navigateur ou la page.",
+ 'audio-capture':"Aucun microphone détecté sur cet appareil.",
+ 'network':"Le service de transcription est injoignable. Vérifiez la connexion ; certains réseaux d'établissement le bloquent.",
+ 'aborted':"Écoute interrompue.",
+ 'language-not-supported':"Cette langue n'est pas reconnue par la dictée du navigateur."
+};
+async function startMeter(){
+  try{
+    meterStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const src=audioCtx.createMediaStreamSource(meterStream);
+    const an=audioCtx.createAnalyser();an.fftSize=512;src.connect(an);
+    const buf=new Uint8Array(an.frequencyBinCount);
+    const bar=document.querySelector('#level i');
+    const tick=()=>{an.getByteTimeDomainData(buf);
+      let peak=0;for(let i=0;i<buf.length;i++)peak=Math.max(peak,Math.abs(buf[i]-128));
+      bar.style.width=Math.min(100,peak*1.6)+'%';
+      meterRAF=requestAnimationFrame(tick)};
+    tick();return true;
+  }catch(e){return e}
+}
+function stopMeter(){
+  cancelAnimationFrame(meterRAF);
+  if(meterStream)meterStream.getTracks().forEach(t=>t.stop());
+  if(audioCtx)audioCtx.close().catch(()=>{});
+  meterStream=null;audioCtx=null;
+  const b=document.querySelector('#level i');if(b)b.style.width='0';
+}
+const srLang=()=>S.mode==='prof'?'fr-FR':(LMAP[S.srcLang]?.sr||'fr-FR');
+async function startRec(){
+  if(!window.isSecureContext)return toast("La dictée exige une page en HTTPS. Voir « Installation ».",6000);
+  if(!SR)return toast("Ce navigateur ne gère pas la dictée. Utilisez Chrome ou Edge, ou écrivez au clavier.",6000);
+  const m=await startMeter();
+  if(m!==true){stopMeter();return toast("Micro inaccessible : "+(m&&m.name||'')+". Autorisez le microphone pour ce site.",6000)}
+  rec=new SR();rec.lang=srLang();rec.continuous=S.mode==='prof';rec.interimResults=true;
+  rec.onresult=e=>{let it='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const r=e.results[i];
+      if(r.isFinal){const t=notation(r[0].transcript.trim());if(t)newTurn(t)}else it+=r[0].transcript}
+    showInterim(it)};
+  rec.onerror=e=>{
+    if(e.error==='no-speech')return;
+    setStatus('Micro : '+e.error,'bad');
+    toast(SRERR[e.error]||("Erreur de dictée : "+e.error),7000);
+    if(['not-allowed','service-not-allowed','audio-capture','network','language-not-supported'].includes(e.error))stopRec();
+  };
+  rec.onend=()=>{if(listening&&S.mode==='prof'){try{rec.start()}catch(e){}}else if(listening)stopRec()};
+  try{rec.start()}catch(e){toast("Impossible de démarrer la dictée : "+e.message,6000);stopMeter();return}
+  listening=true;
+  document.getElementById('mic').classList.add('on');setIcon('mic','stop');
+  setStatus(S.mode==='prof'?"À l'écoute — français":"À l'écoute — "+LMAP[S.srcLang].o,'live');
+}
+function stopRec(){
+  listening=false;try{rec&&rec.stop()}catch(e){}
+  stopMeter();
+  document.getElementById('mic').classList.remove('on');setIcon('mic','mic');
+  setStatus('Micro éteint');showInterim('');
+}
+const toggleRec=()=>listening?stopRec():startRec();
+function setStatus(t,c){const e=document.getElementById('status');e.className='chip'+(c?' '+c:'');e.innerHTML='<span class="dot"></span>'+esc(t)}
+
+/* ===== TOURS DE PAROLE ===== */
+const stream=()=>document.getElementById('stream');
+function showInterim(t){
+  let c=document.getElementById('liveCard');
+  if(!t){if(c)c.remove();return}
+  if(!c){c=document.createElement('div');c.id='liveCard';c.className='tour live';
+    c.innerHTML='<div class="fr"><span class="txt interim"></span></div>';stream().prepend(c)}
+  c.querySelector('.txt').textContent=t;
+}
+function cellHTML(code,html,pending){
+  const L=code==='simple'?{n:'Français simple',o:'niveau A1',rtl:0}:(code==='fr'?{n:'Français',o:'',rtl:0}:LMAP[code]);
+  return `<div class="cell ${code==='simple'?'simple':''}" ${L.rtl?'dir="rtl"':''} data-lang="${code}">
+   <div class="head"><span class="native">${esc(L.n)}</span><span>${esc(L.o||'')}</span><span style="flex:1"></span>
+     <button class="iconbtn sm" data-speak="${code}" title="Écouter">${svg('sound')}</button>
+     <button class="iconbtn sm" data-zoom="${code}" title="Afficher en grand">${svg('expand')}</button></div>
+   <div class="body">${pending?'<span class="wait"><i></i><i></i><i></i></span>':html}</div></div>`;
+}
+function paintFr(card){
+  const t=card.dataset.fr||'';
+  const hits=t?detect(t):[];
+  hits.forEach(h=>USED.add(h.id));
+  card.querySelector('.mainline').innerHTML=t?markFr(t,hits):'<span class="wait"><i></i><i></i><i></i></span>';
+  return hits;
+}
+function newTurn(text){
+  showInterim('');
+  const mode=S.mode,src=S.srcLang;
+  const card=document.createElement('div');card.className='tour';
+  card.dataset.mode=mode;card.dataset.src=src;
+  card.dataset.fr=mode==='prof'?text:'';card.dataset.orig=text;
+  const others=S.langs.filter(c=>!(mode==='eleve'&&c===src));
+  let cells=others.map(c=>cellHTML(c,'',true)).join('');
+  if(mode==='eleve')cells=cellHTML(src,esc(text),false)+cells;
+  if(S.simple&&S.engine==='claude')cells=cellHTML('simple','',true)+cells;
+  const note=mode==='eleve'?`<span class="src-note">${esc(LMAP[src].o)} → français</span>`:'';
+  card.innerHTML=`<div class="fr"><div class="txt">${note}<div class="mainline"></div></div>
+     <button class="iconbtn" data-speak="fr" title="Écouter en français">${svg('sound')}</button>
+     <button class="iconbtn" data-edit title="Corriger la phrase">${svg('pen')}</button>
+     <button class="iconbtn" data-copy title="Copier">${svg('copy')}</button>
+     <button class="iconbtn go" data-send hidden title="Traduire">${svg('check')}</button>
+   </div><div class="grid" ${S.relire&&mode==='prof'?'hidden':''}>${cells}</div>`;
+  stream().prepend(card);paintFr(card);
+  if(S.relire&&mode==='prof'){card.classList.add('draft');card.querySelector('[data-send]').hidden=false;enterEdit(card)}
+  else run(card);
+  return card;
+}
+function enterEdit(card){
+  const m=card.querySelector('.mainline');
+  m.textContent=card.dataset.fr||card.dataset.orig;
+  m.contentEditable='true';m.focus();
+  const r=document.createRange();r.selectNodeContents(m);r.collapse(false);
+  const s=getSelection();s.removeAllRanges();s.addRange(r);
+  card.querySelector('[data-send]').hidden=false;
+  m.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();commit(card)}
+    if(e.key==='Escape'){m.contentEditable='false';paintFr(card)}};
+}
+function commit(card){
+  const m=card.querySelector('.mainline');
+  const t=notation(m.innerText.trim());if(!t)return;
+  m.contentEditable='false';card.classList.remove('draft');
+  card.querySelector('[data-send]').hidden=true;
+  card.querySelector('.grid').hidden=false;
+  card.dataset.fr=t;card.dataset.edited='1';
+  paintFr(card);
+  card.querySelectorAll('.cell').forEach(c=>{
+    if(card.dataset.mode==='eleve'&&c.dataset.lang===card.dataset.src)return;
+    c.querySelector('.body').innerHTML='<span class="wait"><i></i><i></i><i></i></span>'});
+  run(card);
+}
+function failHTML(msg){return `<span class="fail" role="button" tabindex="0">${svg('retry')}${esc(msg)}</span>`}
+async function run(card){
+  if(!S.engine){
+    card.querySelectorAll('.cell .body').forEach(b=>{if(b.querySelector('.wait'))b.innerHTML=failHTML("Aucun moteur de traduction joignable. Voir « Installation ».")});
+    return;
+  }
+  const mode=card.dataset.mode,src=card.dataset.src,edited=card.dataset.edited==='1';
+  const fromFrench=mode==='prof'||edited;
+  const source=fromFrench?card.dataset.fr:card.dataset.orig;
+  const srcCode=fromFrench?'fr':src;
+  const targets=S.langs.filter(c=>!(mode==='eleve'&&!edited&&c===src));
+  const ids=fromFrench?[...new Set(detect(source).map(h=>h.id))]:[];
+  try{
+    const res=await translateAll(source,srcCode,targets,S.simple&&S.engine==='claude');
+    if(!fromFrench&&res.fr&&typeof res.fr==='string'){
+      card.dataset.fr=res.fr;paintFr(card);
+    }else if(!fromFrench&&res.fr&&res.fr.err){
+      card.querySelector('.mainline').innerHTML=failHTML(res.fr.err);
+    }
+    card.querySelectorAll('.cell').forEach(c=>{
+      const k=c.dataset.lang;
+      if(mode==='eleve'&&!edited&&k===src)return;
+      const v=res[k];
+      const body=c.querySelector('.body');
+      if(typeof v==='string'&&v.trim()){
+        const finalIds=fromFrench?ids:[...new Set(detect(card.dataset.fr||'').map(h=>h.id))];
+        body.innerHTML=k==='simple'?esc(v):markTarget(v,k,finalIds);
+      }else if(v&&v.err)body.innerHTML=failHTML(v.err);
+      else body.innerHTML='<span style="color:var(--muted)">—</span>';
+    });
+  }catch(e){
+    card.querySelectorAll('.cell .body').forEach(b=>{if(b.querySelector('.wait'))b.innerHTML=failHTML(e.message||'échec')});
+  }
+  card.querySelectorAll('.fail').forEach(f=>f.onclick=()=>{
+    card.querySelectorAll('.cell .body').forEach(b=>b.innerHTML='<span class="wait"><i></i><i></i><i></i></span>');run(card)});
+}
+
+/* ===== CLICS ===== */
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-say]');if(g)return say(g.dataset.say,'fr');
+  const sp=e.target.closest('[data-speak]');
+  if(sp){const c=sp.dataset.speak,card=sp.closest('.tour');
+    const t=c==='fr'?(card.dataset.fr||card.querySelector('.mainline').innerText)
+                    :card.querySelector('.cell[data-lang="'+c+'"] .body').innerText;
+    return say(t,c)}
+  const z=e.target.closest('[data-zoom]');
+  if(z){const c=z.dataset.zoom,cell=z.closest('.tour').querySelector('.cell[data-lang="'+c+'"]');
+    const L=c==='simple'?{n:'Français simple',rtl:0}:LMAP[c];
+    document.getElementById('focus').classList.add('open');
+    document.getElementById('fLang').textContent=L.n;
+    const ft=document.getElementById('fTxt');
+    ft.innerHTML=cell.querySelector('.body').innerHTML;ft.dir=L.rtl?'rtl':'ltr';
+    document.getElementById('fSay').onclick=()=>say(ft.innerText,c);return}
+  const ed=e.target.closest('[data-edit]');if(ed)return enterEdit(ed.closest('.tour'));
+  const sd=e.target.closest('[data-send]');if(sd)return commit(sd.closest('.tour'));
+  const cp=e.target.closest('[data-copy]');
+  if(cp){const card=cp.closest('.tour');const l=[card.querySelector('.mainline').innerText];
+    card.querySelectorAll('.cell').forEach(c=>l.push(c.querySelector('.native').innerText+' : '+c.querySelector('.body').innerText));
+    navigator.clipboard.writeText(l.join('\n')).then(()=>toast('Copié'),()=>toast('Copie refusée par le navigateur'));return}
+  const cl=e.target.closest('[data-close]');if(cl)cl.closest('.sheet').classList.remove('open');
+  const inf=e.target.closest('[data-info]');if(inf)openInfo(inf.dataset.info);
+});
+document.getElementById('fClose').onclick=()=>document.getElementById('focus').classList.remove('open');
+
+/* ===== GLOSSAIRE ===== */
+let gTab='chap';
+const levelChaps=()=>CHAPS.filter(c=>c.lvl.includes(S.level));
+const idsForLevel=()=>Object.keys(TERMS).filter(id=>CHAPS.find(c=>c.id===TERMS[id].chap).lvl.includes(S.level));
+function renderTabs(){
+  const t=document.getElementById('gTabs');
+  const tabs=[{k:'chap',l:'Par chapitre'},{k:'fr',l:'A → Z français'}].concat(S.langs.map(c=>({k:c,l:'A → Z '+LMAP[c].o})));
+  t.innerHTML=tabs.map(x=>`<button class="tab" role="tab" data-tab="${x.k}" aria-selected="${x.k===gTab}">${esc(x.l)}</button>`).join('');
+  t.onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;gTab=b.dataset.tab;renderTabs();renderGloss()};
+}
+function rowHTML(id,ca){
+  const T=TERMS[id];
+  const tr=S.langs.map(c=>`<span>${esc(LMAP[c].o)} · <b class="${LMAP[c].rtl?'rtl':''}">${ca[c]&&ca[c][id]?esc(ca[c][id]):'…'}</b></span>`).join('');
+  return `<div class="row"><div class="fr-t"><span style="color:${colorOf(id)}">●</span>${esc(T.fr)}
+    <button class="iconbtn sm" data-say="${esc(T.fr)}" title="Prononciation">${svg('sound')}</button></div>
+    <div class="tr">${tr}</div></div>`;
+}
+async function renderGloss(){
+  const raw=document.getElementById('gsearch').value||'',q=norm(raw);
+  const ca={};for(const c of S.langs)ca[c]=await loadCache(c);
+  let ids=idsForLevel().filter(id=>!q||norm(TERMS[id].fr).includes(q)||S.langs.some(c=>(ca[c][id]||'').toLowerCase().includes(raw.toLowerCase())));
+  const box=document.getElementById('gList');
+  if(gTab==='chap'){
+    const order=levelChaps().slice().sort((a,b)=>(S.chaps.includes(b.id)?1:0)-(S.chaps.includes(a.id)?1:0));
+    box.innerHTML=order.map(ch=>{const l=ids.filter(i=>TERMS[i].chap===ch.id);
+      return l.length?`<h3 class="chap">${esc(ch.t)}</h3>`+l.map(i=>rowHTML(i,ca)).join(''):''}).join('');
+  }else if(gTab==='fr'){
+    ids.sort((a,b)=>TERMS[a].fr.localeCompare(TERMS[b].fr,'fr'));
+    box.innerHTML=ids.map(i=>rowHTML(i,ca)).join('');
+  }else{
+    const co=ca[gTab]||{};
+    ids.sort((a,b)=>String(co[a]||'\uFFFF').localeCompare(String(co[b]||'\uFFFF')));
+    box.innerHTML=ids.map(i=>rowHTML(i,ca)).join('');
+  }
+  if(!box.innerHTML)box.innerHTML='<p class="small">Aucun mot ne correspond.</p>';
+}
+async function openGloss(){
+  document.getElementById('glossSheet').classList.add('open');renderTabs();renderGloss();
+  const prio=idsForLevel().sort((a,b)=>(S.chaps.includes(TERMS[b].chap)?1:0)-(S.chaps.includes(TERMS[a].chap)?1:0));
+  for(const c of S.langs){
+    const ca=await loadCache(c);
+    if(prio.some(i=>!ca[i])){setStatus('Glossaire · '+LMAP[c].o+'…');
+      await translateTerms(c,prio.slice(0,140),renderGloss);renderGloss()}
+  }
+  setStatus(listening?"À l'écoute":'Micro éteint',listening?'live':'');
+}
+
+/* ===== FICHE ===== */
+async function openFiche(){
+  document.getElementById('ficheSheet').classList.add('open');
+  const ca={};for(const c of S.langs)ca[c]=await loadCache(c);
+  const ids=[...USED],b=document.getElementById('ficheBody');
+  if(!ids.length){b.innerHTML='<p class="small">Aucun mot du glossaire n\'a encore été prononcé. La fiche se remplit au fil de la séance.</p>';return}
+  const by={};ids.forEach(i=>(by[TERMS[i].chap]=by[TERMS[i].chap]||[]).push(i));
+  b.innerHTML='<p class="small" style="margin-bottom:18px">'+ids.length+' mot'+(ids.length>1?'s':'')+' rencontré'+(ids.length>1?'s':'')+' pendant la séance.</p>'+
+   CHAPS.filter(c=>by[c.id]).map(c=>`<h3 class="chap">${esc(c.t)}</h3>`+
+     by[c.id].sort((x,y)=>TERMS[x].fr.localeCompare(TERMS[y].fr,'fr')).map(i=>rowHTML(i,ca)).join('')).join('');
+}
+
+/* ===== DIAGNOSTIC ===== */
+function dline(st,title,detail){
+  const cls=st===true?'o':(st==='warn'?'w':'x');
+  const gl=st===true?'✓':(st==='warn'?'!':'✕');
+  return `<div class="dline"><span class="st ${cls}">${gl}</span><div class="tx"><b>${esc(title)}</b><span>${detail}</span></div></div>`;
+}
+async function runDiag(target){
+  const box=document.getElementById(target||'diag');
+  box.innerHTML='<div class="dline"><span class="st w">…</span><div class="tx"><b>Test en cours</b><span>Quelques secondes.</span></div></div>';
+  const out=[];
+  const inFrame=window.self!==window.top;
+  const proto=location.protocol;
+  if(proto==='file:')out.push(dline(false,'Page ouverte en fichier local',"La dictée vocale est impossible en <code>file://</code>. Ouvrez « Installation » pour la mettre en ligne ou la lancer en local sécurisé."));
+  else if(!window.isSecureContext)out.push(dline(false,'Page non sécurisée',"La dictée exige HTTPS."));
+  else out.push(dline(true,'Page sécurisée',esc(location.origin)));
+  if(inFrame)out.push(dline('warn','Page affichée dans un cadre',"Le micro est presque toujours bloqué dans un aperçu intégré. Ouvrez la page dans un onglet à part."));
+  out.push(SR?dline(true,'Dictée vocale disponible',"Reconnaissance vocale prise en charge par ce navigateur.")
+             :dline(false,'Dictée vocale absente',"Chrome ou Microsoft Edge sur ordinateur sont nécessaires. La saisie au clavier reste utilisable."));
+  if(navigator.mediaDevices&&window.isSecureContext){
+    try{const s=await navigator.mediaDevices.getUserMedia({audio:true});
+      const lbl=s.getAudioTracks()[0]?.label||'micro';
+      s.getTracks().forEach(t=>t.stop());
+      out.push(dline(true,'Microphone autorisé',esc(lbl)));
+    }catch(e){out.push(dline(false,'Microphone refusé ou absent',esc(e.name)+" — autorisez le microphone pour ce site, puis relancez le test."))}
+  }else out.push(dline(false,'Microphone inaccessible',"Nécessite une page sécurisée."));
+  const eng=await pickEngine();
+  out.push(eng?dline(true,'Moteur de traduction : '+ENGINES[eng].label,ENGINES[eng].note)
+              :dline(false,'Aucun moteur de traduction joignable',"Réseau coupé, ou pare-feu de l'établissement. Sans moteur, seul le glossaire déjà enregistré reste lisible."));
+  const fv=VOICES.filter(v=>/^fr/i.test(v.lang));
+  out.push(fv.length?dline(true,'Voix française',esc(fv.sort((a,b)=>scoreFr(b)-scoreFr(a))[0].name))
+                    :dline('warn','Aucune voix française',"La prononciation des mots du glossaire sera muette."));
+  box.innerHTML=out.join('');
+  paintEngineChip();
+}
+function paintEngineChip(){
+  const c=document.getElementById('engineChip');if(!c)return;
+  if(S.engine){c.className='chip good';c.innerHTML='<span class="dot"></span>'+esc(ENGINES[S.engine].label)}
+  else{c.className='chip bad';c.innerHTML='<span class="dot"></span>Aucun moteur'}
+}
+
+/* ===== PAGES ===== */
+const ABOUT=`
+<p>Parole partagée affiche en direct, en français et dans jusqu'à quatre autres langues, ce que dit le professeur — et, en mode élève, ce que dit un élève. Il vise un cas précis : un cours de mathématiques dans une classe où les élèves ne partagent pas encore le français.</p>
+<h3>Le vocabulaire avant les phrases</h3>
+<p>Environ 280 termes de mathématiques, en seize chapitres du primaire au CAP, sont suivis nommément. Quand l'un d'eux est prononcé, il prend une couleur, la même dans toutes les langues affichées. L'élève relie ce qu'il entend à ce qu'il connaît déjà, sans qu'on lui explique la correspondance. Un clic sur le mot, dans n'importe quelle langue, le fait entendre en français.</p>
+<p>Deux familles souvent négligées sont incluses : les verbes de consigne — tracer, encadrer, arrondir, en déduire — et les mots du raisonnement — donc, or, on en déduit que, au moins, par personne. Ce sont eux qui bloquent le plus souvent un élève par ailleurs à l'aise en mathématiques.</p>
+<h3>Fidélité</h3>
+<p>La reconnaissance vocale se trompe sur les énoncés chiffrés, et une erreur traduite a l'apparence d'une vérité. Deux garde-fous : le mode « relire avant de traduire », et la correction après coup avec le crayon, qui relance la traduction. La traduction du glossaire est calculée une fois puis gardée, pour qu'un même mot ne change pas d'une séance à l'autre.</p>
+<h3>Ce que l'outil ne fait pas</h3>
+<ul>
+<li>Il n'affiche rien sur l'appareil des élèves : un seul écran, projeté.</li>
+<li>Il ne remplace pas l'entrée dans le français. La fiche de fin de séance ne reprend que les mots rencontrés, pas le cours traduit.</li>
+<li>La qualité varie selon les langues. Peul, soninké, comorien, amazigh ne sont pas pris en charge par le moteur gratuit ; bambara et lingala le sont mais restent approximatifs, et beaucoup d'élèves n'y sont pas lecteurs. Privilégiez l'écoute.</li>
+<li>Il demande une connexion. Seul le glossaire déjà traduit reste lisible hors ligne.</li>
+</ul>
+<h3>Auteur</h3>
+<p>Conçu par <a href="https://www.linkedin.com/in/tomrougeaud/" target="_blank" rel="noopener">Tom Rougeaud</a>. <a href="https://tom-rougeaud.github.io/casier/" target="_blank" rel="noopener">Voir plus de projets</a>.</p>`;
+
+const PRIVACY=`
+<p>Cette page décrit le trajet des données. Elle est écrite pour être lue par un professeur, un chef d'établissement ou un délégué à la protection des données.</p>
+<h3>Pas de compte, pas de serveur</h3>
+<p>L'application est une page web qui s'exécute dans votre navigateur. Ni inscription, ni identifiant, ni base d'utilisateurs, ni mesure d'audience, ni cookie publicitaire. Rien n'est associé à une personne.</p>
+<h3>Ce qui sort de votre appareil</h3>
+<ul>
+<li><b>L'audio du micro.</b> La dictée utilise la reconnaissance vocale intégrée au navigateur. Sur Chrome et Edge, cette fonction transmet l'audio capté aux serveurs de l'éditeur du navigateur — Google ou Microsoft — pour le transcrire, puis renvoie le texte. Ce traitement échappe à l'application et relève des conditions d'utilisation de votre navigateur.</li>
+<li><b>Le texte à traduire.</b> Chaque phrase validée, et les termes du glossaire, sont envoyés au moteur de traduction actif, indiqué en haut de l'écran : le service de traduction de Google, celui de MyMemory, ou l'interface d'Anthropic selon les cas.</li>
+</ul>
+<p>Dans tous les cas, ce sont des paroles de cours. L'outil ne demande jamais le nom, l'âge, la classe, la nationalité ou la situation d'un élève.</p>
+<h3>Ce qui reste sur votre appareil</h3>
+<ul>
+<li>Vos préférences : niveau, chapitres, langues choisies.</li>
+<li>Les traductions du glossaire déjà calculées, pour ne pas les recalculer à chaque séance.</li>
+</ul>
+<p>Aucune transcription de séance n'est enregistrée. Ce qui est à l'écran disparaît dès que la page est fermée, rechargée, ou que vous appuyez sur l'icône d'effacement. Les réglages comportent un bouton qui supprime aussi le glossaire enregistré.</p>
+<h3>Recommandations d'usage</h3>
+<ul>
+<li>Informez les élèves que ce qui est dit devant le micro est transcrit par un service distant, et coupez le micro hors des moments d'enseignement.</li>
+<li>Ne prononcez devant le micro aucun nom d'élève, résultat individuel, situation familiale, administrative ou médicale.</li>
+<li>Le mode élève transmet la parole d'un mineur : annoncez-le, et laissez l'élève choisir de parler ou non.</li>
+<li>N'imprimez et ne diffusez que la fiche de vocabulaire, qui ne contient aucune parole d'élève.</li>
+</ul>
+<p class="small">Ce texte décrit un fonctionnement technique. Il ne constitue pas une analyse juridique et ne remplace pas l'avis du délégué à la protection des données de votre académie, à solliciter avant tout déploiement au-delà de votre classe.</p>`;
+
+const INSTALL=`
+<p>La dictée vocale n'est autorisée par les navigateurs que sur une page servie en HTTPS ou depuis <code>localhost</code>. Un fichier ouvert par double-clic, ou une page affichée dans un aperçu intégré, ne pourra jamais accéder au micro. Trois façons de régler ça, de la plus simple à la plus durable.</p>
+<h3>1. GitHub Pages, deux minutes</h3>
+<ul>
+<li>Déposez ce fichier dans un dépôt GitHub, renommé <code>index.html</code>.</li>
+<li>Dans <i>Settings → Pages</i>, choisissez la branche <code>main</code> et le dossier racine.</li>
+<li>La page est publiée en HTTPS. Le micro fonctionne, le moteur gratuit aussi, et rien n'est à installer sur les postes de l'établissement.</li>
+</ul>
+<h3>2. En local, pour tester</h3>
+<p>Dans le dossier contenant le fichier, une ligne de commande suffit : <code>python3 -m http.server 8000</code>, puis ouvrez <code>http://localhost:8000</code>. Le navigateur considère <code>localhost</code> comme sécurisé.</p>
+<h3>3. Sur l'espace de l'établissement</h3>
+<p>Tout hébergement en HTTPS convient : site de l'établissement, espace personnel de l'ENT, Netlify, Cloudflare Pages. Aucun serveur applicatif n'est nécessaire, c'est un fichier statique.</p>
+<h3>Si le micro reste muet</h3>
+<ul>
+<li>Vérifiez le cadenas dans la barre d'adresse : le microphone doit être sur « Autoriser ».</li>
+<li>Regardez la petite barre verte sous le bouton micro pendant que vous parlez. Si elle bouge, le micro capte et c'est la transcription qui échoue ; si elle ne bouge pas, c'est le micro ou l'autorisation.</li>
+<li>L'erreur « network » signale que le service de transcription est bloqué — fréquent sur les réseaux filtrés d'établissement. Demandez l'ouverture des domaines de reconnaissance vocale, ou utilisez la saisie au clavier.</li>
+<li>Firefox et Safari ne gèrent pas cette dictée. Chrome ou Edge.</li>
+</ul>
+<h3>Si les traductions échouent</h3>
+<p>Le test au lancement indique le moteur retenu. Si aucun n'est joignable, c'est le réseau ou le filtrage. Les domaines utilisés sont <code>translate.googleapis.com</code> et <code>api.mymemory.translated.net</code>.</p>
+<p><a href="https://tom-rougeaud.github.io/casier/" target="_blank" rel="noopener">Voir plus de projets</a> · <a href="https://www.linkedin.com/in/tomrougeaud/" target="_blank" rel="noopener">Tom Rougeaud</a></p>`;
+
+function openInfo(tab){
+  const s=document.getElementById('infoSheet');s.classList.add('open');
+  document.querySelectorAll('#iTabs .tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.itab===tab));
+  document.getElementById('infoTitle').textContent=tab==='privacy'?'Confidentialité':(tab==='install'?'Installation':'À propos');
+  document.getElementById('infoBody').innerHTML=tab==='privacy'?PRIVACY:(tab==='install'?INSTALL:ABOUT);
+}
+document.getElementById('iTabs').onclick=e=>{const b=e.target.closest('[data-itab]');if(b)openInfo(b.dataset.itab)};
+
+/* ===== RÉGLAGES ===== */
+function renderSettings(){
+  const fv=VOICES.filter(v=>/^fr/i.test(v.lang)).sort((a,b)=>scoreFr(b)-scoreFr(a));
+  document.getElementById('setBody').innerHTML=`
+  <div class="set"><div class="lbl">Moteur de traduction<small>${S.engine?esc(ENGINES[S.engine].label)+' — '+esc(ENGINES[S.engine].note):'aucun moteur joignable'}</small></div>
+    <select id="engSel" aria-label="Moteur">${Object.keys(ENGINES).map(k=>`<option value="${k}" ${k===S.engine?'selected':''}>${esc(ENGINES[k].label)}</option>`).join('')}</select></div>
+  <div class="set"><div class="lbl">Diagnostic<small>Micro, réseau, voix.</small></div>
+    <button class="btn ghost" id="setDiag">Tester</button></div>
+  <div id="setDiagBox"></div>
+  <div class="set"><div class="lbl">Voix française<small>${fv.length?'Retenue : '+esc(fv[0].name)+'. Les voix « Natural » et « Google » sont les plus naturelles.':'Aucune voix française installée.'}</small></div>
+    <select id="vSel" aria-label="Voix">${fv.map(v=>`<option ${v.name===S.voiceFr?'selected':''}>${esc(v.name)}</option>`).join('')}</select></div>
+  <div class="set"><div class="lbl">Vitesse de la voix<small>Ralentir aide la répétition.</small></div>
+    <input type="range" id="vRate" min="0.6" max="1.15" step="0.02" value="${S.rate}" aria-label="Vitesse"></div>
+  <div class="set"><div class="lbl">Relire avant de traduire<small>La phrase s'affiche seule et corrigible ; la traduction part à la validation.</small></div>
+    <button class="sw" id="swRelire" aria-pressed="${S.relire}" aria-label="Relire avant de traduire"></button></div>
+  <div class="set"><div class="lbl">Colonne français simplifié<small>Disponible uniquement avec le moteur Claude.</small></div>
+    <button class="sw" id="swSimple" aria-pressed="${S.simple}" aria-label="Français simplifié"></button></div>
+  <div class="set"><div class="lbl">Écriture mathématique<small>« au carré » devient ², « pour cent » devient %.</small></div>
+    <button class="sw" id="swNot" aria-pressed="${S.notation}" aria-label="Écriture mathématique"></button></div>
+  <div class="set"><div class="lbl">Fond clair<small>Salle éclairée ou impression.</small></div>
+    <button class="sw" id="swLight" aria-pressed="${document.body.classList.contains('clair')}" aria-label="Fond clair"></button></div>
+  <div class="set"><div class="lbl">Police à interlettrage élargi<small>Confort pour les déchiffreurs débutants.</small></div>
+    <button class="sw" id="swDys" aria-pressed="${document.body.classList.contains('dys')}" aria-label="Police élargie"></button></div>
+  <div class="set"><div class="lbl">Séance<small>${esc(S.langs.map(c=>LMAP[c].o).join(', '))} · ${esc(ctxChaps())}</small></div>
+    <button class="btn ghost" id="reopen">Changer</button></div>
+  <div class="set"><div class="lbl">Glossaire enregistré<small>Traductions gardées dans ce navigateur.</small></div>
+    <button class="btn ghost" id="wipe">Effacer</button></div>
+  <p class="small" style="margin-top:20px">Raccourcis : <b>Espace</b> micro · <b>G</b> glossaire · <b>F</b> fiche · <b>E</b> mode élève · <b>Échap</b> fermer.</p>`;
+  document.getElementById('engSel').onchange=async e=>{
+    const k=e.target.value;toast('Test du moteur…');
+    if(await testEngine(k)){S.engine=k;paintEngineChip();toast('Moteur : '+ENGINES[k].label)}
+    else{toast(ENGINES[k].label+" est injoignable depuis ce réseau.",5000);e.target.value=S.engine||''}};
+  document.getElementById('setDiag').onclick=()=>runDiag('setDiagBox');
+  const vs=document.getElementById('vSel');
+  if(vs)vs.onchange=e=>{S.voiceFr=e.target.value;say("Trace un rectangle de huit centimètres de longueur.")};
+  document.getElementById('vRate').oninput=e=>S.rate=parseFloat(e.target.value);
+  const tog=(id,fn)=>document.getElementById(id).onclick=e=>{const on=e.currentTarget.getAttribute('aria-pressed')!=='true';e.currentTarget.setAttribute('aria-pressed',on);fn(on)};
+  tog('swRelire',v=>S.relire=v);
+  tog('swSimple',v=>{S.simple=v;if(v&&S.engine!=='claude')toast("Le français simplifié demande le moteur Claude.")});
+  tog('swNot',v=>S.notation=v);
+  tog('swLight',v=>document.body.classList.toggle('clair',v));
+  tog('swDys',v=>document.body.classList.toggle('dys',v));
+  document.getElementById('reopen').onclick=()=>{document.getElementById('setSheet').classList.remove('open');openStart()};
+  document.getElementById('wipe').onclick=async()=>{for(const c of Object.keys(GC)){GC[c]={};await saveCache(c)}toast('Glossaire effacé.')};
+}
+
+/* ===== DÉMARRAGE ===== */
+function renderStart(){
+  document.getElementById('lvlPills').innerHTML=[['p','Primaire'],['c','Collège'],['l','Lycée pro / CAP']]
+    .map(([k,l])=>`<button class="pill" data-lvl="${k}" aria-pressed="${S.level===k}">${l}</button>`).join('');
+  document.getElementById('chapPills').innerHTML=levelChaps()
+    .map(ch=>`<button class="pill" data-ch="${ch.id}" aria-pressed="${S.chaps.includes(ch.id)}">${esc(ch.t)}</button>`).join('');
+  document.getElementById('langBank').innerHTML=LANGS.map(g=>
+    `<p class="group">${esc(g.g)}</p><div class="langgrid">`+g.l.map(l=>
+     `<button class="lang" data-c="${l.c}" aria-pressed="${S.langs.includes(l.c)}">
+       <span class="n" ${l.rtl?'dir="rtl"':''}>${esc(l.n)}</span><span class="o">${esc(l.o)}</span>
+       ${l.oral?'<span class="oral">surtout orale — préférez l\'écoute</span>':''}
+       ${!l.g?'<span class="oral">moteur gratuit non disponible</span>':''}</button>`).join('')+'</div>').join('');
+  syncStart();
+}
+function syncStart(){
+  const full=S.langs.length>=4;
+  document.querySelectorAll('.lang').forEach(b=>{const on=S.langs.includes(b.dataset.c);
+    b.setAttribute('aria-pressed',on);b.disabled=!on&&full});
+  document.getElementById('count').textContent=' — '+S.langs.length+' sur 4';
+  document.getElementById('goBtn').disabled=!S.langs.length;
+}
+document.getElementById('lvlPills').onclick=e=>{const b=e.target.closest('[data-lvl]');if(!b)return;
+  S.level=b.dataset.lvl;S.chaps=S.chaps.filter(id=>levelChaps().some(c=>c.id===id));renderStart()};
+document.getElementById('chapPills').onclick=e=>{const b=e.target.closest('[data-ch]');if(!b)return;
+  const i=S.chaps.indexOf(b.dataset.ch);if(i>=0)S.chaps.splice(i,1);else S.chaps.push(b.dataset.ch);
+  b.setAttribute('aria-pressed',i<0)};
+document.getElementById('langBank').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;
+  const c=b.dataset.c,i=S.langs.indexOf(c);
+  if(i>=0)S.langs.splice(i,1);else if(S.langs.length<4)S.langs.push(c);syncStart()};
+const openStart=()=>{document.getElementById('start').style.display='block';renderStart()};
+document.getElementById('retest').onclick=()=>runDiag();
+document.getElementById('howto').onclick=()=>openInfo('install');
+document.getElementById('goBtn').onclick=async()=>{
+  document.getElementById('start').style.display='none';
+  document.getElementById('app').hidden=false;
+  S.started=true;S.srcLang=S.langs[0];
+  await STORE.set('prefs',{level:S.level,langs:S.langs,chaps:S.chaps});
+  paintHeader();paintEngineChip();
+  if(!S.engine)toast("Aucun moteur de traduction joignable. Ouvrez « Installation » pour les causes possibles.",7000);
+  const core=Object.keys(TERMS).filter(id=>['cons','classe','logi'].includes(TERMS[id].chap)||S.chaps.includes(TERMS[id].chap));
+  S.langs.forEach(c=>translateTerms(c,core));
+};
+document.getElementById('demoBtn').onclick=()=>{
+  if(!S.langs.length)S.langs=['ar','uk','pt','tr'];
+  if(!S.chaps.length)S.chaps=['mes','geo'];
+  document.getElementById('goBtn').click();
+  setTimeout(()=>newTurn("Aujourd'hui nous calculons l'aire d'un rectangle. Tracez un rectangle de 8 cm de longueur et 5 cm de largeur, puis multipliez la longueur par la largeur."),500);
+};
+
+/* ===== EN-TÊTE, MODES ===== */
+function paintHeader(){
+  document.getElementById('langChip').innerHTML=S.langs.map(c=>esc(LMAP[c].n)).join(' · ');
+  document.getElementById('modeChip').innerHTML='<span class="dot"></span><b>'+(S.mode==='prof'?'Professeur':'Élève')+'</b>';
+  const s=document.getElementById('srcpick');s.hidden=S.mode==='prof';
+  if(S.mode==='eleve')s.innerHTML=S.langs.map(c=>`<option value="${c}" ${c===S.srcLang?'selected':''}>${esc(LMAP[c].n)} — ${esc(LMAP[c].o)}</option>`).join('');
+  document.getElementById('btnMode').setAttribute('aria-pressed',S.mode==='eleve');
+  document.getElementById('typed').placeholder=S.mode==='prof'?"Écrire une phrase, puis Entrée":"Écrire en "+LMAP[S.srcLang].o+", puis Entrée";
+}
+function switchMode(){
+  if(listening)stopRec();
+  S.mode=S.mode==='prof'?'eleve':'prof';
+  if(!S.langs.includes(S.srcLang))S.srcLang=S.langs[0];
+  paintHeader();
+  toast(S.mode==='eleve'?"Mode élève : l'élève parle dans sa langue, le français s'affiche en haut.":"Mode professeur.");
+}
+document.getElementById('srcpick').onchange=e=>{S.srcLang=e.target.value;paintHeader();if(listening)stopRec()};
+
+['btnMode','btnGloss','btnFiche','btnSet','btnAbout','btnPrint','btnClear','mic','btnZoomUp','btnZoomDn']
+ .forEach((id,i)=>setIcon(id,['swap','book','list','gear','info','print','trash','mic','plus','minus'][i]));
+setIcon('gPreload','dl');setIcon('fPrint','print');setIcon('send','arrow');setIcon('fSay','sound');setIcon('fClose','close');
+document.querySelectorAll('[data-close]').forEach(b=>b.innerHTML=svg('close'));
+
+document.getElementById('btnMode').onclick=switchMode;
+document.getElementById('btnGloss').onclick=openGloss;
+document.getElementById('btnFiche').onclick=openFiche;
+document.getElementById('btnSet').onclick=()=>{document.getElementById('setSheet').classList.add('open');renderSettings()};
+document.getElementById('btnAbout').onclick=()=>openInfo('about');
+document.getElementById('btnPrint').onclick=()=>window.print();
+document.getElementById('fPrint').onclick=()=>window.print();
+document.getElementById('btnClear').onclick=()=>{stream().innerHTML='';toast("Écran effacé. La fiche de vocabulaire est conservée.")};
+document.getElementById('mic').onclick=toggleRec;
+document.getElementById('gsearch').oninput=renderGloss;
+document.getElementById('gPreload').onclick=async()=>{
+  if(!S.engine)return toast("Aucun moteur de traduction joignable.");
+  toast("Traduction du glossaire, gardez la page ouverte…",6000);
+  for(const c of S.langs){await translateTerms(c,idsForLevel(),renderGloss);renderGloss()}
+  toast('Glossaire complet et enregistré.')};
+const sendTyped=()=>{const i=document.getElementById('typed'),t=i.value.trim();if(!t)return;i.value='';newTurn(notation(t))};
+document.getElementById('send').onclick=sendTyped;
+document.getElementById('typed').onkeydown=e=>{if(e.key==='Enter')sendTyped()};
+let fs=1;const zoom=d=>{fs=Math.min(1.9,Math.max(.8,fs+d));document.documentElement.style.setProperty('--fs',fs+'rem')};
+document.getElementById('btnZoomUp').onclick=()=>zoom(.1);
+document.getElementById('btnZoomDn').onclick=()=>zoom(-.1);
+
+document.addEventListener('keydown',e=>{
+  const g=e.target.closest&&e.target.closest('[data-say]');
+  if(g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();return say(g.dataset.say,'fr')}
+  if(/input|select|textarea/i.test(e.target.tagName)||e.target.isContentEditable)return;
+  if(!S.started)return;
+  if(e.code==='Space'){e.preventDefault();toggleRec()}
+  else if(e.key==='g'||e.key==='G')openGloss();
+  else if(e.key==='f'||e.key==='F')openFiche();
+  else if(e.key==='e'||e.key==='E')switchMode();
+  else if(e.key==='Escape'){document.querySelectorAll('.sheet.open').forEach(s=>s.classList.remove('open'));document.getElementById('focus').classList.remove('open')}
+});
+
+(async()=>{
+  const p=await STORE.get('prefs');
+  if(p){S.level=p.level||S.level;S.langs=(p.langs||[]).filter(c=>LMAP[c]);S.chaps=(p.chaps||[]).filter(id=>CHAPS.some(c=>c.id===id))}
+  renderStart();runDiag();
+})();
+</script>
+</html>
