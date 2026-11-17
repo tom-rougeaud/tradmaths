@@ -20,3 +20,6 @@ Les mathématiques dans toutes les langues de la classe : ce que dit le professe
 
 ## Licence
 © Tom Rougeaud — [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/deed.fr).
+
+## Voix naturelles (hors ligne)
+Réglages → « Voix naturelles » : ajouter les fichiers `tm-voix-xxx.onnx` (≈ 114 Mo par langue, modèles MMS-TTS de Meta, CC BY-NC 4.0). Ils restent sur l’appareil (IndexedDB), rien n’est envoyé. Moteur : ONNX Runtime Web (dossier `vendor/ort`, MIT). Sans ces voix, l’appli utilise celles du navigateur.
