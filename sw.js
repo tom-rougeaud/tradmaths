@@ -1,6 +1,6 @@
 /* TradMaths — service worker : cache hors ligne versionné.
    Ne touche jamais aux appels vers les moteurs de traduction (autres domaines). */
-const VERSION='tradmaths-v3-2026-11-17';
+const VERSION='tradmaths-v3b-2026-11-17';
 const FILES=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(FILES)))});
 self.addEventListener('activate',e=>{
