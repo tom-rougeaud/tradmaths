@@ -10,6 +10,6 @@
    Laissés vides, ces champs désactivent seulement le mode salle : le reste fonctionne.
 ═══════════════════════════════════════════════════════════════ */
 var TRADMATHS_CONFIG = {
-  SUPABASE_URL: "",
-  SUPABASE_ANON_KEY: ""
+  SUPABASE_URL: "https://zfqzvwpjxmrlctxsmxch.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_21JhJbzpINsSzFdD0oGqUw_BL_AtgSA"
 };
