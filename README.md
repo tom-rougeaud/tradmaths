@@ -23,3 +23,17 @@ Les mathématiques dans toutes les langues de la classe : ce que dit le professe
 
 ## Voix naturelles (hors ligne)
 Réglages → « Voix naturelles » : ajouter les fichiers `tm-voix-xxx.onnx` (≈ 114 Mo par langue, modèles MMS-TTS de Meta, CC BY-NC 4.0). Ils restent sur l’appareil (IndexedDB), rien n’est envoyé. Moteur : ONNX Runtime Web (dossier `vendor/ort`, MIT). Sans ces voix, l’appli utilise celles du navigateur.
+
+
+## Salle élèves (version 4, palier 1)
+
+Chaque élève peut lire sur **son téléphone** la traduction dans **sa** langue, pendant que le tableau continue d’afficher les traductions habituelles.
+
+1. Dans TradMaths, bouton **Salle élèves** › **Ouvrir une salle** : un code et un QR code s’affichent (bouton « Afficher en grand » pour la projection).
+2. Les élèves scannent le QR code (page `eleve.html`), écrivent leur prénom ou un pseudo et choisissent leur langue.
+3. Chaque phrase traduite au tableau est envoyée aux téléphones, dans la langue de chaque élève seulement. Les élèves ne peuvent rien écrire ni envoyer.
+4. **Fermer la salle** à la fin du cours : tout est effacé de la base (sinon, effacement automatique 4 h après la dernière activité).
+
+**Mise en service (une seule fois)** : coller `tradmaths_salle.sql` dans Supabase (SQL Editor › Run), puis remplir `config.js` avec l’adresse du projet et la clé publique « anon » / « publishable ». Le même projet Supabase que Flash Maths convient : les tables de TradMaths commencent par `tm_`. Sans cela, seul le mode salle est désactivé.
+
+Bibliothèques intégrées (dossier `vendor/`, aucun CDN) : supabase-js et qrcode-generator (licence MIT), chargées seulement à l’ouverture d’une salle.

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<!-- TradMaths élève — lire sur son téléphone la traduction du cours dans sa langue (mode « Salle élèves »).
+     Auteur : Tom Rougeaud. Code rédigé avec l’aide de Claude Opus 5.5 (Anthropic). Licence CC BY-NC 4.0.
+     Bibliothèque intégrée : supabase-js (MIT), dans vendor/. Aucun traceur, aucune police distante.
+     Le téléphone ne peut que LIRE : il reçoit seulement la traduction dans la langue choisie. -->
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#123240">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<title>TradMaths élève — la traduction dans ma langue</title>
+<link rel="manifest" href="manifest-eleve.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TradMaths élève">
+<style>
+  /* ===== Couleurs sobres (bleu nuit / ardoise), thème clair ou sombre selon le téléphone ===== */
+  :root{--bg:#f4f3ee;--panel:#fff;--line:#d9d4c8;--ink:#14202a;--muted:#5d6d78;--acc:#1f5d78;--acc2:#a05e00;--ok:#1d7a55;--warn:#b6412c;--fs:1rem;
+    --ui:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,"Noto Sans","Noto Sans Arabic","Noto Sans Tamil","Noto Sans Bengali","Noto Sans Devanagari","Noto Sans Georgian","Noto Sans Armenian","Noto Sans Ethiopic","Noto Sans Thai","Noto Sans Khmer","Noto Sans Myanmar",sans-serif}
+  @media (prefers-color-scheme:dark){:root{--bg:#101a22;--panel:#18252f;--line:#2c3c48;--ink:#eef1f2;--muted:#a3b2bc;--acc:#7fb6cf;--acc2:#f0b65a;--ok:#5fc9a0;--warn:#e8735a}}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:calc(17px * var(--k,1))}
+  body{min-height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  button,input{font:inherit;color:inherit}
+  button{cursor:pointer;border:0;background:none;min-height:44px;border-radius:12px}
+  :focus-visible{outline:3px solid var(--acc2);outline-offset:2px}
+  .wrap{max-width:720px;margin:0 auto;padding:16px}
+  h1{font-size:1.5em;margin:6px 0 4px}h2{font-size:1.15em;margin:18px 0 8px}
+  .muted{color:var(--muted)}.small{font-size:.9em}
+  .btn{background:var(--acc);color:#fff;font-weight:700;padding:12px 22px}
+  @media (prefers-color-scheme:dark){.btn{color:#0d1820}}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}
+  .btn:disabled{opacity:.55;cursor:default}
+  label{display:block;font-weight:700;margin:14px 0 6px}
+  input[type=text]{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);min-height:48px}
+  #code{text-transform:uppercase;letter-spacing:.3em;font-size:1.4em;font-weight:800;text-align:center;max-width:220px}
+  .err{color:var(--warn);font-weight:600;min-height:1.4em}
+  /* liste des langues */
+  .langs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px;max-height:46dvh;overflow:auto;padding:2px}
+  .lg{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:8px 12px;border:1px solid var(--line);background:var(--panel)}
+  .lg .n{font-weight:700;font-size:1.05em}.lg .o{font-size:.82em;color:var(--muted)}
+  .lg[aria-pressed=true]{border:2px solid var(--acc);background:color-mix(in srgb,var(--acc) 14%,var(--panel))}
+  .lg[aria-pressed=true] .n::before{content:"✓ "}
+  .grp{grid-column:1/-1;font-size:.8em;color:var(--muted);margin:8px 0 0;text-transform:uppercase;letter-spacing:.05em}
+  /* écran de lecture */
+  #bar{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:8px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.88em;min-height:40px}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--muted)}.dot.up{background:var(--ok)}.dot.down{background:var(--warn)}
+  .grow{flex:1}
+  #feed{padding:12px;max-width:760px;margin:0 auto}
+  .it{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin:0 0 10px}
+  .it .t{font-size:1.35em;line-height:1.45;margin:0 0 6px;white-space:pre-wrap;overflow-wrap:anywhere}
+  .it .f{color:var(--muted);margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+  .it .acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .it .acts button{border:1px solid var(--line);padding:6px 12px;font-size:.9em}
+  .it.top{border:2px solid var(--acc)}
+  .it.top .t{font-size:1.7em}
+  .it.new{animation:pop .5s ease}
+  @keyframes pop{from{transform:translateY(-6px);opacity:.3}to{transform:none;opacity:1}}
+  @media (prefers-reduced-motion:reduce){.it.new{animation:none}}
+  .wait{text-align:center;padding:40px 10px;color:var(--muted)}
+  .menu{display:none;position:absolute;right:12px;top:58px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px;z-index:9;min-width:230px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+  .menu.open{display:block}.menu button{display:block;width:100%;text-align:left;padding:10px 12px}
+  .menu button:hover{background:color-mix(in srgb,var(--acc) 10%,transparent)}
+  /* fenêtres */
+  .dlg{position:fixed;inset:0;background:rgba(8,14,20,.6);display:none;place-items:center;padding:14px;z-index:20}
+  .dlg.open{display:grid}
+  .dlg .card{background:var(--panel);border-radius:18px;max-width:520px;width:100%;max-height:90dvh;overflow:auto;padding:20px}
+  .dlg .card p,.dlg .card li{line-height:1.5}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  #toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;display:none;z-index:30;max-width:92vw}
+  #toast.open{display:block}
+  .hide{display:none!important}
+</style>
+<body>
+<!-- ===== Écran 1 : rejoindre la salle ===== -->
+<main id="sJoin" class="wrap" hidden>
+  <h1>TradMaths élève</h1>
+  <p class="muted">Je lis le cours dans ma langue.</p>
+  <label for="code">Code de la salle</label>
+  <input id="code" type="text" inputmode="text" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="codeHelp">
+  <p id="codeHelp" class="small muted">Le code est écrit au tableau.</p>
+  <label for="pseudo">Mon prénom ou un pseudo</label>
+  <input id="pseudo" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Exemple : Sami">
+  <p class="small muted">Pas de nom de famille.</p>
+  <label for="lsearch">Ma langue</label>
+  <input id="lsearch" type="text" autocomplete="off" placeholder="Chercher une langue…" aria-controls="langs">
+  <div class="langs" id="langs" role="group" aria-label="Langues"></div>
+  <p class="err" id="jErr" role="alert"></p>
+  <div class="row"><button class="btn" id="go">Entrer dans la salle</button>
+    <button class="btn ghost" data-open="about">À propos</button><button class="btn ghost" data-open="privacy">Confidentialité</button></div>
+</main>
+
+<!-- ===== Écran 2 : lecture des traductions ===== -->
+<div id="sFeed" hidden>
+  <div id="bar">
+    <span class="chip"><span class="dot" id="dot"></span><span id="stTxt">Connexion…</span></span>
+    <button class="chip" id="langBtn" title="Changer de langue"></button>
+    <span class="grow"></span>
+    <button class="chip" id="zDn" aria-label="Texte plus petit">A−</button>
+    <button class="chip" id="zUp" aria-label="Texte plus grand">A+</button>
+    <button class="chip" id="menuBtn" aria-haspopup="true" aria-expanded="false" aria-label="Menu">☰</button>
+    <div class="menu" id="menu" role="menu">
+      <button role="menuitem" data-open="about">À propos</button>
+      <button role="menuitem" data-open="privacy">Confidentialité</button>
+      <button role="menuitem" id="mInstall">Installer l’appli</button>
+      <button role="menuitem" id="mWipe">Effacer mes données</button>
+      <button role="menuitem" id="mLeave">Quitter la salle</button>
+    </div>
+  </div>
+  <div id="feed" aria-live="polite"></div>
+</div>
+
+<!-- ===== Écran 3 : salle fermée ===== -->
+<main id="sEnd" class="wrap" hidden>
+  <h1>La salle est fermée</h1>
+  <p class="muted" id="endTxt">Le professeur a fermé la salle. Les phrases restent affichées ci-dessous jusqu’à ce que tu quittes la page.</p>
+  <div class="row"><button class="btn" id="again">Rejoindre une autre salle</button></div>
+  <div id="feedEnd" style="margin-top:16px"></div>
+</main>
+
+<!-- ===== Fenêtres : informations et installation ===== -->
+<div class="dlg" id="info" role="dialog" aria-modal="true" aria-labelledby="infoT"><div class="card">
+  <h2 id="infoT"></h2><div id="infoB"></div>
+  <div class="row"><button class="btn" data-close>Fermer</button></div></div></div>
+<div class="dlg" id="inst" role="dialog" aria-modal="true" aria-labelledby="instT"><div class="card">
+  <h2 id="instT">Installer TradMaths élève</h2>
+  <p>L’appli s’ouvrira comme une vraie appli, depuis l’écran d’accueil du téléphone. Rien n’est envoyé à un tiers pour l’installer.</p>
+  <div id="instIOS" hidden>
+    <svg viewBox="0 0 300 70" width="100%" role="img" aria-label="Partager, puis Sur l’écran d’accueil, puis Ajouter">
+      <rect x="4" y="12" width="84" height="46" rx="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M46 22v20M38 30l8-8 8 8M34 36v12h24V36" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M96 35h14M104 29l6 6-6 6" stroke="currentColor" stroke-width="2.5" fill="none"/>
+      <rect x="116" y="12" width="84" height="46" rx="10" fill="none" stroke="currentColor" stroke-width="2"/><rect x="146" y="22" width="24" height="24" rx="5" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M158 28v12M152 34h12" stroke="currentColor" stroke-width="2.5"/>
+      <path d="M208 35h14M216 29l6 6-6 6" stroke="currentColor" stroke-width="2.5" fill="none"/>
+      <rect x="228" y="12" width="68" height="46" rx="10" fill="none" stroke="currentColor" stroke-width="2"/><text x="262" y="41" text-anchor="middle" font-size="15" font-family="sans-serif" fill="currentColor">Ajouter</text>
+    </svg>
+    <ol><li>Touche <b>Partager</b> (le carré avec une flèche).</li><li>Choisis <b>Sur l’écran d’accueil</b>.</li><li>Touche <b>Ajouter</b>.</li></ol>
+  </div>
+  <p id="instOther" class="small" hidden>Ouvre le menu du navigateur (⋮), puis « Installer l’application » ou « Ajouter à l’écran d’accueil ».</p>
+  <div class="row"><button class="btn" id="instGo">Installer l’appli</button><button class="btn ghost" id="instLater">Plus tard</button><button class="btn ghost" id="instNever">Ne plus proposer</button></div>
+</div></div>
+<div id="toast" role="status"></div>
+
+<script type="application/json" id="tm-langs">[{"c":"en","n":"English","o":"Anglais","s":"en-GB","gr":"Langues les plus présentes en classe d'accueil"},{"c":"ar","n":"العربية","o":"Arabe","s":"ar-SA","gr":"Langues les plus présentes en classe d'accueil","r":1},{"c":"uk","n":"Українська","o":"Ukrainien","s":"uk-UA","gr":"Langues les plus présentes en classe d'accueil"},{"c":"ru","n":"Русский","o":"Russe","s":"ru-RU","gr":"Langues les plus présentes en classe d'accueil"},{"c":"tr","n":"Türkçe","o":"Turc","s":"tr-TR","gr":"Langues les plus présentes en classe d'accueil"},{"c":"pt","n":"Português","o":"Portugais (Brésil)","s":"pt-BR","gr":"Langues les plus présentes en classe d'accueil"},{"c":"es","n":"Español","o":"Espagnol","s":"es-ES","gr":"Langues les plus présentes en classe d'accueil"},{"c":"sq","n":"Shqip","o":"Albanais","s":"sq-AL","gr":"Langues les plus présentes en classe d'accueil"},{"c":"ro","n":"Română","o":"Roumain","s":"ro-RO","gr":"Langues les plus présentes en classe d'accueil"},{"c":"fa","n":"فارسی","o":"Persan / dari","s":"fa-IR","gr":"Langues les plus présentes en classe d'accueil","r":1},{"c":"ps","n":"پښتو","o":"Pachto","s":"ps-AF","gr":"Langues les plus présentes en classe d'accueil","r":1},{"c":"bn","n":"বাংলা","o":"Bengali","s":"bn-BD","gr":"Langues les plus présentes en classe d'accueil"},{"c":"zh","n":"中文","o":"Chinois mandarin","s":"zh-CN","gr":"Langues les plus présentes en classe d'accueil"},{"c":"ka","n":"ქართული","o":"Géorgien","s":"ka-GE","gr":"Langues les plus présentes en classe d'accueil"},{"c":"ti","n":"ትግርኛ","o":"Tigrigna","s":"ti-ER","gr":"Langues les plus présentes en classe d'accueil","nv":1},{"c":"so","n":"Soomaali","o":"Somali","s":"so-SO","gr":"Langues les plus présentes en classe d'accueil"},{"c":"enus","n":"English (US)","o":"Anglais américain","s":"en-US","gr":"Europe"},{"c":"it","n":"Italiano","o":"Italien","s":"it-IT","gr":"Europe"},{"c":"de","n":"Deutsch","o":"Allemand","s":"de-DE","gr":"Europe"},{"c":"nl","n":"Nederlands","o":"Néerlandais","s":"nl-NL","gr":"Europe"},{"c":"sv","n":"Svenska","o":"Suédois","s":"sv-SE","gr":"Europe"},{"c":"pl","n":"Polski","o":"Polonais","s":"pl-PL","gr":"Europe"},{"c":"bg","n":"Български","o":"Bulgare","s":"bg-BG","gr":"Europe"},{"c":"sr","n":"Српски","o":"Serbe","s":"sr-RS","gr":"Europe"},{"c":"hr","n":"Hrvatski","o":"Croate / bosniaque","s":"hr-HR","gr":"Europe"},{"c":"mk","n":"Македонски","o":"Macédonien","s":"mk-MK","gr":"Europe"},{"c":"el","n":"Ελληνικά","o":"Grec","s":"el-GR","gr":"Europe"},{"c":"hu","n":"Magyar","o":"Hongrois","s":"hu-HU","gr":"Europe"},{"c":"cs","n":"Čeština","o":"Tchèque","s":"cs-CZ","gr":"Europe"},{"c":"hy","n":"Հայերեն","o":"Arménien","s":"hy-AM","gr":"Europe"},{"c":"ptpt","n":"Português","o":"Portugais (Portugal)","s":"pt-PT","gr":"Europe"},{"c":"mo","n":"Молдовеняскэ","o":"Moldave","s":"ro-RO","gr":"Europe"},{"c":"ary","n":"الدارجة","o":"Arabe marocain","s":"ar-MA","gr":"Afrique","r":1},{"c":"arq","n":"الجزايرية","o":"Arabe algérien","s":"ar-DZ","gr":"Afrique","r":1},{"c":"sw","n":"Kiswahili","o":"Swahili","s":"sw-KE","gr":"Afrique"},{"c":"am","n":"አማርኛ","o":"Amharique","s":"am-ET","gr":"Afrique"},{"c":"bm","n":"Bamanankan","o":"Bambara","s":"fr-FR","gr":"Afrique"},{"c":"ln","n":"Lingála","o":"Lingala","s":"fr-FR","gr":"Afrique","nv":1},{"c":"wo","n":"Wolof","o":"Wolof","s":"fr-FR","gr":"Afrique","nv":1},{"c":"ff","n":"Pulaar","o":"Peul / pular","s":"fr-FR","gr":"Afrique"},{"c":"mg","n":"Malagasy","o":"Malgache","s":"fr-FR","gr":"Afrique"},{"c":"hi","n":"हिन्दी","o":"Hindi","s":"hi-IN","gr":"Asie, Caucase, Amériques"},{"c":"ur","n":"اردو","o":"Ourdou","s":"ur-PK","gr":"Asie, Caucase, Amériques","r":1},{"c":"pa","n":"ਪੰਜਾਬੀ","o":"Pendjabi","s":"pa-IN","gr":"Asie, Caucase, Amériques"},{"c":"ta","n":"தமிழ்","o":"Tamoul","s":"ta-IN","gr":"Asie, Caucase, Amériques"},{"c":"si","n":"සිංහල","o":"Cinghalais","s":"si-LK","gr":"Asie, Caucase, Amériques"},{"c":"ne","n":"नेपाली","o":"Népalais","s":"ne-NP","gr":"Asie, Caucase, Amériques"},{"c":"vi","n":"Tiếng Việt","o":"Vietnamien","s":"vi-VN","gr":"Asie, Caucase, Amériques"},{"c":"km","n":"ខ្មែរ","o":"Khmer","s":"km-KH","gr":"Asie, Caucase, Amériques"},{"c":"th","n":"ไทย","o":"Thaï","s":"th-TH","gr":"Asie, Caucase, Amériques"},{"c":"my","n":"မြန်မာ","o":"Birman","s":"my-MM","gr":"Asie, Caucase, Amériques"},{"c":"id","n":"Indonesia","o":"Indonésien","s":"id-ID","gr":"Asie, Caucase, Amériques"},{"c":"tl","n":"Tagalog","o":"Tagalog","s":"fil-PH","gr":"Asie, Caucase, Amériques"},{"c":"mn","n":"Монгол","o":"Mongol","s":"mn-MN","gr":"Asie, Caucase, Amériques"},{"c":"ckb","n":"کوردیی ناوەندی","o":"Kurde sorani","s":"ar-IQ","gr":"Asie, Caucase, Amériques","r":1,"nv":1},{"c":"ku","n":"Kurmancî","o":"Kurde kurmandji","s":"tr-TR","gr":"Asie, Caucase, Amériques"},{"c":"az","n":"Azərbaycan","o":"Azéri","s":"az-AZ","gr":"Asie, Caucase, Amériques"},{"c":"uz","n":"O'zbek","o":"Ouzbek","s":"uz-UZ","gr":"Asie, Caucase, Amériques"},{"c":"he","n":"עברית","o":"Hébreu","s":"he-IL","gr":"Asie, Caucase, Amériques","r":1},{"c":"ce","n":"Нохчийн","o":"Tchétchène","s":"ru-RU","gr":"Asie, Caucase, Amériques"},{"c":"ht","n":"Kreyòl ayisyen","o":"Créole haïtien","s":"fr-FR","gr":"Asie, Caucase, Amériques"}]</script>
+<script src="config.js"></script>
+<script src="vendor/supabase/supabase.js"></script>
+<script>
+"use strict";
+/* ===================== OUTILS ===================== */
+const $=id=>document.getElementById(id);
+const LANGS=JSON.parse($('tm-langs').textContent);       // langues proposées (copie de la liste de TradMaths)
+const LMAP={};LANGS.forEach(l=>LMAP[l.c]=l);
+let toastT=0;
+function toast(m,ms){const t=$('toast');t.textContent=m;t.classList.add('open');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('open'),ms||3500)}
+
+/* ===================== STOCKAGE (protégé, repli en mémoire) ===================== */
+const PFX='tme1:',MEM={};
+const store={
+  get(k){try{const v=localStorage.getItem(PFX+k);if(v!=null)return JSON.parse(v)}catch(e){}return MEM[k]??null},
+  set(k,v){try{localStorage.setItem(PFX+k,JSON.stringify(v));return}catch(e){}MEM[k]=v},
+  del(k){try{localStorage.removeItem(PFX+k)}catch(e){}delete MEM[k]}
+};
+/* préférences : prénom/pseudo, langue, taille du texte ; session : salle en cours (reprise après rechargement) */
+const P=Object.assign({pseudo:'',lang:'',k:1},store.get('prefs')||{});
+if(!LMAP[P.lang])P.lang='';if(typeof P.k!=='number'||P.k<.8||P.k>1.8)P.k=1;
+const savePrefs=()=>store.set('prefs',{pseudo:P.pseudo,lang:P.lang,k:P.k});
+document.documentElement.style.setProperty('--k',P.k);
+
+/* ===================== BASE DE DONNÉES ===================== */
+function cfg(){
+  const c=(typeof TRADMATHS_CONFIG!=='undefined')?TRADMATHS_CONFIG:null;
+  if(!c||!c.SUPABASE_URL||!c.SUPABASE_ANON_KEY)return null;
+  const u=String(c.SUPABASE_URL).trim(),k=String(c.SUPABASE_ANON_KEY).trim();
+  if(!/^https:\/\/[a-z0-9-]+\.supabase\.(co|in|net)\/?$/i.test(u)&&!/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/.test(u))return null;
+  if(k.length<30)return null;
+  return {url:u.replace(/\/+$/,''),key:k};
+}
+let SB=null;
+function client(){
+  if(SB)return SB;const c=cfg();if(!c||!window.supabase)return null;
+  SB=window.supabase.createClient(c.url,c.key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  return SB;
+}
+function rpc(fn,args,timeout){
+  return new Promise((res,rej)=>{
+    const sb=client();if(!sb)return rej(new Error('config'));
+    let done=false;const t=setTimeout(()=>{if(!done){done=true;rej(new Error('timeout'))}},timeout||10000);
+    sb.rpc(fn,args||{}).then(r=>{if(done)return;done=true;clearTimeout(t);if(r.error)rej(r.error);else res(r.data)},
+      e=>{if(done)return;done=true;clearTimeout(t);rej(e)});
+  });
+}
+function errText(e){
+  const m=String((e&&(e.message||e.details||e.code))||e||'');
+  if(m==='config')return "La salle n’est pas encore prête. Dis-le au professeur.";
+  if(m==='timeout'||/fetch|NetworkError|Load failed/i.test(m))return "Pas de connexion Internet. Vérifie le wifi ou les données mobiles.";
+  return "Un problème est survenu. Recommence.";
+}
+
+/* ===================== ÉCRAN « REJOINDRE » ===================== */
+function show(id){['sJoin','sFeed','sEnd'].forEach(s=>$(s).hidden=s!==id)}
+function renderLangs(){
+  const q=$('lsearch').value.trim().toLowerCase(),box=$('langs');let html='',g='';
+  LANGS.filter(l=>!q||l.n.toLowerCase().includes(q)||l.o.toLowerCase().includes(q)).forEach(l=>{
+    if(l.gr!==g&&!q){g=l.gr;html+=`<p class="grp">${esc(g)}</p>`}
+    html+=`<button class="lg" data-l="${l.c}" aria-pressed="${l.c===P.lang}"><span class="n" ${l.r?'dir="rtl"':''}>${esc(l.n)}</span><span class="o">${esc(l.o)}</span></button>`;
+  });
+  box.innerHTML=html||'<p class="muted">Aucune langue trouvée.</p>';
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+$('langs').addEventListener('click',e=>{const b=e.target.closest('[data-l]');if(!b)return;P.lang=b.dataset.l;savePrefs();
+  $('langs').querySelectorAll('[data-l]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.l===P.lang));$('jErr').textContent=''});
+$('lsearch').oninput=renderLangs;
+$('code').oninput=e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4)};
+
+/* état de la connexion à la salle */
+const R={code:'',player:'',since:0,items:new Map(),ch:null,up:false,timer:0,busy:false,pending:false,joining:false};
+
+async function join(){
+  if(R.joining)return;
+  const code=$('code').value.trim().toUpperCase(),ps=$('pseudo').value.trim();
+  const err=m=>{$('jErr').textContent=m};
+  if(!/^[A-Z0-9]{4}$/.test(code))return err('Écris le code de 4 caractères affiché au tableau.');
+  if(ps.length<2)return err('Écris ton prénom ou un pseudo (2 lettres au moins).');
+  if(!P.lang)return err('Choisis ta langue dans la liste.');
+  P.pseudo=ps;savePrefs();
+  const old=store.get('sess'),same=old&&old.code===code;
+  R.joining=true;$('go').disabled=true;err('');
+  try{
+    const r=await rpc('tm_join',{p_code:code,p_pseudo:ps,p_lang:P.lang,p_player:same?old.player:null});
+    if(!r||!r.ok){
+      const m={not_found:'Cette salle n’existe pas ou est fermée. Vérifie le code.',full:'La salle est pleine (30 élèves).',
+        pseudo_taken:'Ce prénom est déjà pris dans la salle. Ajoute une lettre ou un chiffre.',pseudo_invalid:'Ce prénom n’est pas accepté. Utilise des lettres.',
+        lang_invalid:'Choisis ta langue dans la liste.'};
+      err(m[r&&r.err]||'Impossible d’entrer. Recommence.');return;
+    }
+    if(!same){R.items.clear();R.since=0}
+    R.code=r.code;R.player=r.id;store.set('sess',{code:R.code,player:R.player,at:Date.now()});
+    enterFeed();
+  }catch(e){err(errText(e))}
+  finally{R.joining=false;$('go').disabled=false}
+}
+$('go').onclick=join;
+['code','pseudo','lsearch'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter'&&id!=='lsearch')join()}));
+
+/* ===================== ÉCRAN « LECTURE » ===================== */
+function enterFeed(){
+  show('sFeed');paintLang();renderFeed();openChannel();pull();
+  clearInterval(R.timer);R.timer=setInterval(()=>pull(),4000);
+}
+function paintLang(){const l=LMAP[P.lang];$('langBtn').innerHTML=l?`<span ${l.r?'dir="rtl"':''}>${esc(l.n)}</span>&nbsp;· changer`:'Langue'}
+function setUp(up,txt){R.up=up;$('dot').className='dot '+(up?'up':'down');$('stTxt').textContent=txt||(up?'Connecté(e)':'Reconnexion…')}
+/* le canal temps réel ne transporte aucun texte : il dit seulement « il y a du nouveau », puis la page lit la base */
+function openChannel(){
+  const sb=client();if(!sb||R.ch)return;
+  try{
+    const ch=sb.channel('tm1-'+R.code,{config:{broadcast:{self:false,ack:false}}});
+    ch.on('broadcast',{event:'n'},()=>pullSoon());
+    ch.subscribe(st=>{if(st==='SUBSCRIBED'){clearInterval(R.timer);R.timer=setInterval(()=>pull(),10000);pullSoon()}
+      else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'){clearInterval(R.timer);R.timer=setInterval(()=>pull(),4000)}});
+    R.ch=ch;
+  }catch(e){}
+}
+function closeChannel(){try{if(R.ch&&SB)SB.removeChannel(R.ch)}catch(e){}R.ch=null;clearInterval(R.timer);R.timer=0}
+let soonT=0;function pullSoon(){clearTimeout(soonT);soonT=setTimeout(pull,150)}
+/* lecture des nouvelles phrases (dans ma langue seulement) */
+async function pull(){
+  if(!R.player)return;
+  if(R.busy){R.pending=true;return}
+  R.busy=true;
+  try{
+    const r=await rpc('tm_pull',{p_player:R.player,p_since:R.since},9000);
+    if(r&&r.ok){
+      setUp(true);
+      (r.items||[]).forEach(it=>{if(typeof it.id==='string')R.items.set(it.id,{s:+it.s||0,fr:String(it.fr||''),t:typeof it.t==='string'?it.t:'',fresh:true})});
+      if((r.items||[]).length){R.since=Math.max(R.since,...r.items.map(x=>+x.s||0));renderFeed()}
+    }else if(r&&(r.err==='ended'||r.err==='gone')){return ended(r.err)}
+  }catch(e){setUp(false,'Reconnexion…')}
+  finally{R.busy=false;if(R.pending){R.pending=false;pull()}}
+}
+function itemHTML(it,top){
+  const l=LMAP[P.lang]||{},rtl=l.r?' dir="rtl"':'';
+  const t=it.t?`<p class="t" lang="${esc(P.lang)}"${rtl}>${esc(it.t)}</p>`:'<p class="t muted" style="font-size:1em">Traduction en préparation… Elle s’affichera ici.</p>';
+  return `<article class="it${top?' top':''}${it.fresh?' new':''}" data-id="${esc(it.id)}">${t}<p class="f" lang="fr">${esc(it.fr)}</p>
+    <div class="acts">${it.t?`<button data-say="t">🔊 Écouter</button>`:''}<button data-say="f">🔊 Français</button></div></article>`;
+}
+function renderFeed(target){
+  const box=target||$('feed');
+  const list=[...R.items.entries()].map(([id,v])=>Object.assign({id},v)).sort((a,b)=>b.s-a.s);
+  box.innerHTML=list.length?list.map((it,i)=>itemHTML(it,i===0)).join(''):'<p class="wait">J’attends la première phrase du professeur…<br><span class="small">Elle s’affichera ici, dans ta langue.</span></p>';
+  R.items.forEach(v=>v.fresh=false);
+}
+function onSay(e){const b=e.target.closest('[data-say]');if(!b)return;
+  const it=R.items.get(b.closest('[data-id]').dataset.id);if(!it)return;
+  if(b.dataset.say==='f')speak(it.fr,'fr');else speak(it.t,P.lang)}
+$('feed').addEventListener('click',onSay);$('feedEnd').addEventListener('click',onSay);
+
+async function ended(why){
+  closeChannel();store.del('sess');R.player='';
+  $('endTxt').textContent=why==='gone'?'Tu as été retiré(e) de la salle par le professeur, ou ta connexion a été trop longtemps coupée.':
+    'Le professeur a fermé la salle. Les phrases restent affichées ci-dessous jusqu’à ce que tu quittes la page.';
+  show('sEnd');renderFeed($('feedEnd'));
+}
+$('again').onclick=()=>{R.items.clear();R.since=0;$('code').value='';show('sJoin');renderLangs()};
+async function leave(){
+  if(!window.confirm('Quitter la salle ?'))return;
+  const p=R.player;closeChannel();store.del('sess');R.player='';R.items.clear();R.since=0;
+  try{if(p)await rpc('tm_leave',{p_player:p},5000)}catch(e){}
+  show('sJoin');renderLangs();
+}
+$('mLeave').onclick=()=>{closeMenu();leave()};
+/* changer de langue sans quitter la salle */
+$('langBtn').onclick=()=>{closeChannel();$('code').value=R.code;$('pseudo').value=P.pseudo;show('sJoin');renderLangs();
+  $('jErr').textContent='Choisis ta nouvelle langue, puis touche « Entrer dans la salle ».';R.items.clear();R.since=0};
+/* taille du texte */
+function zoom(d){P.k=Math.round(Math.min(1.8,Math.max(.8,P.k+d))*10)/10;document.documentElement.style.setProperty('--k',P.k);savePrefs()}
+$('zUp').onclick=()=>zoom(.1);$('zDn').onclick=()=>zoom(-.1);
+/* menu */
+function closeMenu(){$('menu').classList.remove('open');$('menuBtn').setAttribute('aria-expanded','false')}
+$('menuBtn').onclick=e=>{e.stopPropagation();const o=$('menu').classList.toggle('open');$('menuBtn').setAttribute('aria-expanded',o)};
+document.addEventListener('click',e=>{if(!e.target.closest('#menu'))closeMenu()});
+$('mWipe').onclick=()=>{closeMenu();if(!window.confirm('Effacer ton prénom, ta langue et tes réglages enregistrés sur ce téléphone ?'))return;
+  store.del('prefs');store.del('install');P.pseudo='';P.k=1;document.documentElement.style.setProperty('--k',1);toast('Tes données ont été effacées de ce téléphone.')};
+
+/* ===================== VOIX DU TÉLÉPHONE ===================== */
+let VOICES=[];
+function loadVoices(){try{VOICES=speechSynthesis.getVoices()||[]}catch(e){VOICES=[]}}
+if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
+function speak(text,code){
+  if(!text)return;
+  if(!('speechSynthesis' in window))return toast('Ce téléphone ne sait pas lire à voix haute.');
+  const l=code==='fr'?{s:'fr-FR'}:LMAP[code];
+  if(!l||l.nv)return toast('Il n’existe pas de voix pour cette langue. Lis le texte ou demande au professeur.',5000);
+  const pref=l.s,base=pref.slice(0,2).toLowerCase();
+  const v=VOICES.filter(x=>x.lang.replace('_','-').toLowerCase().startsWith(base))
+    .sort((a,b)=>(b.lang.toLowerCase()===pref.toLowerCase())-(a.lang.toLowerCase()===pref.toLowerCase()))[0];
+  if(!v&&VOICES.length)return toast('Aucune voix dans cette langue sur ce téléphone.',5000);
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=pref;if(v)u.voice=v;u.rate=.9;speechSynthesis.speak(u)}
+  catch(e){toast('Lecture impossible sur ce téléphone.')}
+}
+
+/* ===================== À PROPOS / CONFIDENTIALITÉ ===================== */
+const INFO={
+ about:['À propos',`<p><b>TradMaths élève</b> affiche sur ton téléphone, dans ta langue, ce que le professeur dit ou écrit pendant le cours de mathématiques. Le tableau continue d’afficher toutes les langues.</p>
+  <p>Tu peux seulement lire et écouter : tu ne peux rien écrire ni rien envoyer. Le bouton « 🔊 » utilise la voix de ton téléphone, quand elle existe pour ta langue.</p>
+  <p>La traduction est faite automatiquement : elle peut contenir des erreurs. Les nombres et les symboles ne sont pas traduits.</p>
+  <p class="small muted">Rien à exporter : ce téléphone garde seulement ton prénom ou pseudo, ta langue et la taille du texte (bouton « Effacer mes données » dans le menu).</p>
+  <p class="small">Conçu par <a href="https://www.linkedin.com/in/tomrougeaud/" target="_blank" rel="noopener">Tom Rougeaud</a> — licence CC BY-NC 4.0. Version 4 (palier 1 du mode salle).</p>`],
+ privacy:['Confidentialité',`<p><b>Ce qui part de ton téléphone :</b> le code de la salle, ton prénom ou pseudo, et la langue choisie. Ils sont envoyés à la base de données du professeur (Supabase), pour que tu reçoives la bonne traduction.</p>
+  <p><b>Ce que ton téléphone reçoit :</b> les phrases du cours en français et leur traduction dans ta langue seulement.</p>
+  <p><b>Combien de temps :</b> tout est effacé quand le professeur ferme la salle, et au plus tard 4 heures après la fin du cours.</p>
+  <p><b>Ce qui n’est jamais demandé :</b> nom de famille, photo, adresse, e-mail, numéro de téléphone. Ni micro, ni caméra, ni position.</p>
+  <p><b>Sur ce téléphone :</b> ton prénom ou pseudo, ta langue et la taille du texte, pour ne pas les réécrire. Tu peux les effacer avec « Effacer mes données ».</p>
+  <p class="small muted">Aucun traceur, aucune publicité, aucune mesure d’audience.</p>`]
+};
+let lastFocus=null;
+function openInfo(k){lastFocus=document.activeElement;closeMenu();$('infoT').textContent=INFO[k][0];$('infoB').innerHTML=INFO[k][1];$('info').classList.add('open');$('info').querySelector('[data-close]').focus()}
+document.addEventListener('click',e=>{const o=e.target.closest('[data-open]');if(o)openInfo(o.dataset.open);
+  const c=e.target.closest('[data-close]');if(c){c.closest('.dlg').classList.remove('open');if(lastFocus)try{lastFocus.focus()}catch(_){}}});
+/* fenêtres : Échap ferme, Tab reste dans la fenêtre */
+document.addEventListener('keydown',e=>{const d=document.querySelector('.dlg.open');if(!d)return;
+  if(e.key==='Escape'){d.classList.remove('open');if(d.id==='inst')later();return}
+  if(e.key==='Tab'){const f=[...d.querySelectorAll('button,a[href],input')].filter(x=>x.offsetParent);if(!f.length)return;
+    const a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}});
+
+/* ===================== INSTALLATION SUR L’ÉCRAN D’ACCUEIL ===================== */
+let deferred=null;
+const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
+window.addEventListener('appinstalled',()=>{$('inst').classList.remove('open');$('mInstall').hidden=true;store.set('install',{never:1})});
+function openInstall(){
+  $('instIOS').hidden=!isIOS;$('instOther').hidden=isIOS||!!deferred;$('instGo').hidden=isIOS||!deferred;
+  $('inst').classList.add('open');($('instGo').hidden?$('instLater'):$('instGo')).focus();
+}
+function later(){store.set('install',{until:Date.now()+3*864e5})}
+$('instGo').onclick=async()=>{if(!deferred)return;deferred.prompt();try{await deferred.userChoice}catch(e){}deferred=null;$('inst').classList.remove('open')};
+$('instLater').onclick=()=>{later();$('inst').classList.remove('open')};
+$('instNever').onclick=()=>{store.set('install',{never:1});$('inst').classList.remove('open')};
+$('mInstall').onclick=()=>{closeMenu();openInstall()};
+if(standalone())$('mInstall').hidden=true;
+/* proposée seulement sur l’écran « Rejoindre », après quelques secondes, jamais pendant la lecture */
+function maybeInstall(){
+  if(standalone())return;const s=store.get('install')||{};
+  if(s.never||(s.until&&Date.now()<s.until))return;
+  setTimeout(()=>{if(!$('sJoin').hidden&&!document.querySelector('.dlg.open')&&(deferred||isIOS))openInstall()},8000);
+}
+
+/* ===================== DÉMARRAGE ===================== */
+if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&R.player)pull()});
+window.addEventListener('error',()=>toast('Un problème est survenu. Recommence.',5000));
+(function start(){
+  const q=new URLSearchParams(location.search),c=(q.get('c')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
+  $('code').value=c;$('pseudo').value=P.pseudo||'';renderLangs();
+  if(!cfg()){show('sJoin');$('jErr').textContent='La salle n’est pas encore prête : le professeur doit brancher la base (fichier config.js).';$('go').disabled=true;return}
+  /* reprise après rechargement : même salle, même place */
+  const s=store.get('sess');
+  if(s&&s.code&&s.player&&(!c||c===s.code)&&Date.now()-(s.at||0)<4*3600e3&&P.lang&&P.pseudo){
+    R.code=s.code;R.player=s.player;store.set('sess',{code:R.code,player:R.player,at:Date.now()});enterFeed();return}
+  show('sJoin');
+  if(c)($('pseudo').value?$('lsearch'):$('pseudo')).focus();
+  maybeInstall();
+})();
+</script>
+</body>
+</html>
