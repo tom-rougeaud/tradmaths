@@ -1927,12 +1927,12 @@ const SPEECH=`
 <p>Regardez la barre verte pendant que vous parlez. Si elle bouge mais reste sous le repère rouge, c'est la sensibilité. Si elle bouge et dépasse le repère sans que rien ne s'écrive, c'est la transcription qui échoue. Si elle ne bouge pas, c'est le micro ou son autorisation.</p>`;
 const PRIVACY=`
 <p>Cette page décrit le trajet des données, pour un professeur, un chef d'établissement ou un délégué à la protection des données.</p>
-<h3>Pas de compte, pas de serveur (hors mode salle)</h3>
+<h3>Pas de compte, aucun serveur propre à TradMaths (hors mode salle)</h3>
 <p>TradMaths est une page web qui s'exécute dans votre navigateur. Ni inscription, ni identifiant, ni base d'utilisateurs, ni mesure d'audience, ni cookie publicitaire.</p>
 <h3>Ce qui sort de votre appareil</h3>
 <ul>
 <li><b>L'audio du micro, pendant l'écoute seulement.</b> La dictée utilise la reconnaissance vocale du navigateur. Sur Chrome, Edge et Opera, l'audio capté est transmis aux serveurs de l'éditeur du navigateur pour être transcrit. Ce traitement échappe à l'application. Dès que vous coupez l'écoute, plus rien n'est transcrit ni transmis.</li>
-<li><b>Le texte à traduire.</b> Chaque bloc validé, et les termes du glossaire, sont envoyés au moteur indiqué en haut de l'écran. Plusieurs relais publics sont testés au démarrage ; celui qui répond est affiché et modifiable.</li>
+<li><b>Le texte à traduire.</b> Chaque bloc validé, et les termes du glossaire, sont envoyés au moteur de traduction indiqué en haut de l’écran. Les moteurs possibles sont : <b>Google Traduction</b> (translate.googleapis.com et clients5.google.com, accès public sans clé), <b>Lingva</b> (relais libres lingva.ml et lingva.thedaviddelta.com), <b>MyMemory</b> (api.mymemory.translated.net) et <b>Claude</b> (Anthropic, api.anthropic.com, si ce moteur est disponible dans votre environnement). Plusieurs sont testés au démarrage ; celui qui répond est affiché et modifiable. Le service utilisé reçoit le texte et l’adresse IP de l’appareil, et applique sa propre politique de confidentialité, hors du contrôle de TradMaths.</li>
 </ul>
 <p>Ce sont des paroles de cours. L'outil ne demande jamais le nom, l'âge, la classe, la nationalité ou la situation d'un élève.</p>
 <h3>Mode « Salle élèves » (seulement s’il est utilisé)</h3>
